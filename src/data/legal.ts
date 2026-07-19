@@ -22,9 +22,12 @@ export const TENANCY_CLAUSES: { title: string; body: string }[] = [
   {
     title: "2. Rent & Fees",
     body:
-      "The Tenant shall pay the annual rent stated below in full prior to occupation, together with any " +
-      "applicable service charge, caution/security deposit and statutory fees. The caution deposit is " +
-      "refundable at the end of the term less the cost of repairing any damage beyond fair wear and tear.",
+      "The Tenant shall pay the annual rent stated below in full prior to occupation. In addition, the " +
+      "agency fee, legal fee and caution/security deposit are one-off charges payable once at the " +
+      "commencement of the tenancy (and not annually). All other charges — including the company service " +
+      "charge, security fee, waste management fee and other statutory fees — are included in the yearly " +
+      "tenancy and require no separate payment during the term. The caution/security deposit is refundable " +
+      "at the end of the term, less the cost of repairing any damage beyond fair wear and tear.",
   },
   {
     title: "3. Use of the Property",
