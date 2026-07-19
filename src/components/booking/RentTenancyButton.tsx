@@ -35,6 +35,7 @@ export function RentTenancyButton({ slug, title, pricePerYear }: Props) {
           tenantAddress: fd.tenantAddress,
           guarantorName: fd.guarantorName,
           guarantorPhone: fd.guarantorPhone,
+          guarantorEmail: fd.guarantorEmail,
           startDate: fd.startDate,
         }),
       });
@@ -118,6 +119,9 @@ export function RentTenancyButton({ slug, title, pricePerYear }: Props) {
                     <Input id="t-gphone" name="guarantorPhone" type="tel" required />
                   </Field>
                 </div>
+                <Field label="Guarantor email" htmlFor="t-gemail" required>
+                  <Input id="t-gemail" name="guarantorEmail" type="email" required placeholder="guarantor@example.com" />
+                </Field>
                 <Field label="Preferred start date" htmlFor="t-start" required>
                   <Input id="t-start" name="startDate" type="date" required min={today} />
                 </Field>

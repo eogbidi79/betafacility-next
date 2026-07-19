@@ -85,6 +85,53 @@ export async function notifyTenancyRejected(b: Booking) {
   });
 }
 
+// ─── Guarantor consent ────────────────────────────────────────────────
+
+export async function notifyGuarantorRequest(b: Booking) {
+  if (!b.guarantorEmail || !b.guarantorToken) return;
+  await sendEmail({
+    to: b.guarantorEmail,
+    replyTo: notifyTo.contact,
+    subject: `Please confirm you'll act as guarantor for ${b.guestName}`,
+    html: emailLayout(
+      "Guarantor confirmation requested",
+      [
+        ["Applicant", b.guestName],
+        ["Property", unit(b)],
+        ["Annual rent", formatNaira(b.amount)],
+      ],
+      `Hello ${b.guarantorName ?? "there"}, ${b.guestName} has named you as their guarantor for a ` +
+        `1-year tenancy managed by ${site.legalName}. Please review and confirm your consent to act ` +
+        `as guarantor.` + cta("Review & Confirm", `/guarantor/${b.guarantorToken}`),
+    ),
+  });
+}
+
+export async function notifyGuarantorConfirmed(b: Booking) {
+  await sendEmail({
+    to: b.guestEmail,
+    replyTo: notifyTo.contact,
+    subject: `Your guarantor has confirmed — ${b.reference}`,
+    html: emailLayout(
+      "Guarantor confirmed",
+      [
+        ["Reference", b.reference],
+        ["Guarantor", b.guarantorName ?? "—"],
+      ],
+      "Good news — your guarantor has confirmed. This helps move your application through review.",
+    ),
+  });
+  await notifyStaff(
+    `Guarantor confirmed — ${b.reference}`,
+    [
+      ["Reference", b.reference],
+      ["Applicant", b.guestName],
+      ["Guarantor", `${b.guarantorName ?? "—"} · ${b.guarantorEmail ?? "—"}`],
+    ],
+    [notifyTo.sales, notifyTo.admin],
+  );
+}
+
 // ─── Payment / signing (prospect-facing) ──────────────────────────────
 
 export async function notifyPaymentReceived(b: Booking) {

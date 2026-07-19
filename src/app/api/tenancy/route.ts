@@ -1,9 +1,10 @@
 import { prisma } from "@/lib/db";
 import { tenancySchema } from "@/lib/validation";
 import { parseJson, ok, serverError } from "@/lib/api";
+import { randomUUID } from "node:crypto";
 import { makeReference } from "@/lib/reference";
 import { formatNaira } from "@/lib/utils";
-import { notifyTenancyApplied, notifyStaff } from "@/lib/notifications";
+import { notifyTenancyApplied, notifyGuarantorRequest, notifyStaff } from "@/lib/notifications";
 import { notifyTo } from "@/lib/email";
 import { properties } from "@/data/properties";
 import { NextResponse } from "next/server";
@@ -41,6 +42,8 @@ export async function POST(req: Request) {
         tenantAddress: d.tenantAddress,
         guarantorName: d.guarantorName,
         guarantorPhone: d.guarantorPhone,
+        guarantorEmail: d.guarantorEmail,
+        guarantorToken: randomUUID(),
         checkIn: start,
         checkOut: end,
         nights: 365,
@@ -50,6 +53,7 @@ export async function POST(req: Request) {
     });
 
     await notifyTenancyApplied(booking);
+    await notifyGuarantorRequest(booking);
     await notifyStaff(
       `New 1-year tenancy application — ${booking.reference}`,
       [

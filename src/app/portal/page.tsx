@@ -84,6 +84,9 @@ export default async function PortalPage() {
                     </p>
                   </div>
                   <div className="flex items-center gap-2">
+                    <Badge tone={t.guarantorConsent ? "success" : "neutral"}>
+                      {t.guarantorConsent ? "Guarantor ✓" : "Guarantor pending"}
+                    </Badge>
                     <Badge tone={stageTone(t.stage, t.status)}>
                       {t.status === "SIGNED"
                         ? "SIGNED"

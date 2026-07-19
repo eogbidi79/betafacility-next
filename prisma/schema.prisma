@@ -71,9 +71,13 @@ model Booking {
 
   // Long-term application workflow:
   // APPLIED -> UNDER_REVIEW -> ACCEPTED (pay) | REJECTED
-  stage          String?
-  guarantorName  String?
-  guarantorPhone String?
+  stage             String?
+  guarantorName     String?
+  guarantorPhone    String?
+  guarantorEmail    String?
+  guarantorToken    String?   @unique
+  guarantorConsent  Boolean   @default(false)
+  guarantorConsentAt DateTime?
 
   guestName    String
   guestEmail   String
