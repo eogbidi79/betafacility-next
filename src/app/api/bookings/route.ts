@@ -4,11 +4,10 @@ import { parseJson, ok, serverError } from "@/lib/api";
 import { makeReference } from "@/lib/reference";
 import { sendEmail, emailLayout, notifyTo } from "@/lib/email";
 import { formatNaira } from "@/lib/utils";
+import { computeNights, PENDING_HOLD_MS } from "@/lib/booking";
 import { NextResponse } from "next/server";
 
 export const runtime = "nodejs";
-
-const MS_PER_DAY = 1000 * 60 * 60 * 24;
 
 export async function POST(req: Request) {
   const parsed = await parseJson(req, bookingSchema);
@@ -24,8 +23,7 @@ export async function POST(req: Request) {
     }
 
     // Availability: block overbooking. A unit is occupied for overlapping dates
-    // by confirmed bookings (PAID/SIGNED) or a recent PENDING hold (30 min).
-    const HOLD_MS = 30 * 60 * 1000;
+    // by confirmed bookings (PAID/SIGNED) or a recent PENDING hold.
     const overlapping = await prisma.booking.count({
       where: {
         rentalId: rental.id,
@@ -33,7 +31,7 @@ export async function POST(req: Request) {
         checkOut: { gt: d.checkIn },
         OR: [
           { status: { in: ["PAID", "SIGNED"] } },
-          { status: "PENDING", createdAt: { gte: new Date(Date.now() - HOLD_MS) } },
+          { status: "PENDING", createdAt: { gte: new Date(Date.now() - PENDING_HOLD_MS) } },
         ],
       },
     });
@@ -44,10 +42,7 @@ export async function POST(req: Request) {
       );
     }
 
-    const nights = Math.max(
-      1,
-      Math.round((d.checkOut.getTime() - d.checkIn.getTime()) / MS_PER_DAY),
-    );
+    const nights = computeNights(d.checkIn, d.checkOut);
     const amount = nights * rental.pricePerNight;
 
     const booking = await prisma.booking.create({

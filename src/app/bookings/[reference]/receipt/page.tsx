@@ -74,11 +74,20 @@ export default async function ReceiptPage({
             </dl>
 
             <div className="mt-6 flex items-center justify-between border-t border-gray-100 pt-4">
-              <span className="text-base font-bold text-ink">Total paid</span>
+              <span className="text-base font-bold text-ink">{paid ? "Total paid" : "Amount due"}</span>
               <span className="text-2xl font-extrabold text-brand-600">
                 {formatNaira(booking.amount)}
               </span>
             </div>
+
+            {!paid && (
+              <p className="mt-4 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-700 print:hidden">
+                This booking is awaiting payment.{" "}
+                <a href={`/bookings/${booking.reference}/pay`} className="font-semibold underline">
+                  Complete payment
+                </a>
+              </p>
+            )}
 
             {booking.signatureRef && (
               <div className="mt-6">

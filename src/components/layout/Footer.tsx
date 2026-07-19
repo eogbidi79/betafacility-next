@@ -66,6 +66,9 @@ export function Footer() {
         <div className="mt-12 flex flex-col items-center justify-between gap-4 border-t border-white/10 pt-6 text-sm text-white/50 sm:flex-row">
           <p>© {new Date().getFullYear()} {site.legalName}. All rights reserved.</p>
           <div className="flex gap-6">
+            <Link href="/bookings" className="hover:text-brand-400">
+              Track a Booking
+            </Link>
             <Link href="/privacy" className="hover:text-brand-400">
               Privacy Policy
             </Link>
