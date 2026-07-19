@@ -1,0 +1,141 @@
+// Prisma schema for BetaFacility Managers.
+// Dev uses SQLite; for production swap `provider` to "postgresql" and point
+// DATABASE_URL at Postgres/Supabase — the models below are portable.
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+enum Role {
+  ADMIN
+  STAFF
+  TENANT
+}
+
+model User {
+  id           String   @id @default(cuid())
+  email        String   @unique
+  name         String?
+  passwordHash String
+  role         Role     @default(TENANT)
+  createdAt    DateTime @default(now())
+
+  bookings Booking[]
+}
+
+/// Bookable short-let / long-term units (source of truth for availability).
+model Rental {
+  id            String  @id @default(cuid())
+  slug          String  @unique
+  title         String
+  location      String
+  description   String
+  beds          Int?
+  pricePerNight Int
+  unitsTotal    Int     @default(1)
+  image         String
+  amenities     String // JSON-encoded string[]
+  type          String // "short-term" | "long-term"
+  bedroomClass  String // "studio" | "1-bed" | "2-bed" | "3-bed"
+  active        Boolean @default(true)
+
+  bookings Booking[]
+}
+
+enum BookingStatus {
+  PENDING
+  PAID
+  SIGNED
+  CANCELLED
+}
+
+model Booking {
+  id           String        @id @default(cuid())
+  reference    String        @unique
+  rental       Rental        @relation(fields: [rentalId], references: [id])
+  rentalId     String
+  guestName    String
+  guestEmail   String
+  guestPhone   String
+  checkIn      DateTime
+  checkOut     DateTime
+  nights       Int
+  amount       Int
+  status       BookingStatus @default(PENDING)
+  // Payment (Paystack) — populated once a provider is wired
+  paymentRef   String?
+  paidAt       DateTime?
+  // E-signature — data URL / stored signature reference
+  signatureRef String?
+  signedAt     DateTime?
+  user         User?         @relation(fields: [userId], references: [id])
+  userId       String?
+  createdAt    DateTime      @default(now())
+}
+
+enum RequestStatus {
+  NEW
+  IN_PROGRESS
+  RESOLVED
+  CLOSED
+}
+
+model MaintenanceRequest {
+  id          String        @id @default(cuid())
+  reference   String        @unique
+  kind        String        @default("report") // "report" | "booking"
+  fullName    String
+  email       String
+  phone       String
+  unit        String
+  address     String?
+  category    String?
+  priority    String?
+  service     String?
+  preferredAt DateTime?
+  description String?
+  mediaCount  Int           @default(0)
+  status      RequestStatus @default(NEW)
+  createdAt   DateTime      @default(now())
+}
+
+enum ListingStatus {
+  PENDING
+  APPROVED
+  REJECTED
+}
+
+model AdvertiseSubmission {
+  id            String        @id @default(cuid())
+  reference     String        @unique
+  name          String
+  email         String
+  phone         String
+  role          String
+  propertyClass String
+  listingType   String
+  title         String
+  category      String
+  location      String
+  price         Int
+  description   String
+  imageCount    Int           @default(0)
+  status        ListingStatus @default(PENDING)
+  createdAt     DateTime      @default(now())
+}
+
+model ContactMessage {
+  id          String   @id @default(cuid())
+  name        String
+  email       String
+  phone       String?
+  inquiryType String
+  message     String
+  handled     Boolean  @default(false)
+  createdAt   DateTime @default(now())
+}
