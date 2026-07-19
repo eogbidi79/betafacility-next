@@ -4,9 +4,16 @@ import { Container } from "@/components/ui/Container";
 import { Badge } from "@/components/ui/Badge";
 import { SignOutButton } from "@/components/portal/SignOutButton";
 import { formatNaira } from "@/lib/utils";
-import { setListingStatus, setMaintenanceStatus } from "./actions";
+import { setListingStatus, setMaintenanceStatus, setTenancyStage } from "./actions";
 
 const MAINT_STATUSES = ["NEW", "IN_PROGRESS", "RESOLVED", "CLOSED"] as const;
+
+function stageTone(stage: string | null, status: string): "success" | "brand" | "neutral" | "info" {
+  if (status === "SIGNED" || status === "PAID") return "success";
+  if (stage === "ACCEPTED") return "info";
+  if (stage === "REJECTED") return "neutral";
+  return "brand";
+}
 
 export const dynamic = "force-dynamic";
 export const metadata = { title: "Portal", robots: { index: false } };
@@ -18,7 +25,12 @@ function since(d: Date) {
 export default async function PortalPage() {
   const session = await auth();
 
-  const [bookings, contacts, maintenance, adverts, counts] = await Promise.all([
+  const [tenancyApps, bookings, contacts, maintenance, adverts, counts] = await Promise.all([
+    prisma.booking.findMany({
+      where: { term: "long-term" },
+      orderBy: { createdAt: "desc" },
+      take: 10,
+    }),
     prisma.booking.findMany({ orderBy: { createdAt: "desc" }, take: 8, include: { rental: true } }),
     prisma.contactMessage.findMany({ orderBy: { createdAt: "desc" }, take: 8 }),
     prisma.maintenanceRequest.findMany({ orderBy: { createdAt: "desc" }, take: 8 }),
@@ -53,6 +65,48 @@ export default async function PortalPage() {
         <Stat label="Maintenance requests" value={String(maintCount)} />
         <Stat label="Listing submissions" value={String(advertCount)} />
       </div>
+
+      <Panel title="Tenancy applications (1-year)">
+        {tenancyApps.length === 0 ? (
+          <Empty />
+        ) : (
+          <ul className="divide-y divide-gray-100">
+            {tenancyApps.map((t) => {
+              const decided = t.status === "PAID" || t.status === "SIGNED" || t.stage === "REJECTED";
+              return (
+                <li key={t.id} className="flex flex-wrap items-center justify-between gap-3 py-3 text-sm">
+                  <div className="min-w-[220px]">
+                    <p className="font-medium text-ink">
+                      {t.propertyTitle} <span className="text-ink-muted">· {t.guestName}</span>
+                    </p>
+                    <p className="text-xs text-ink-muted tabular">
+                      {t.reference} · Guarantor: {t.guarantorName ?? "—"} · {formatNaira(t.amount)}
+                    </p>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <Badge tone={stageTone(t.stage, t.status)}>
+                      {t.status === "SIGNED"
+                        ? "SIGNED"
+                        : t.status === "PAID"
+                          ? "PAID"
+                          : t.stage ?? "APPLIED"}
+                    </Badge>
+                    {!decided && (
+                      <div className="flex gap-1">
+                        {t.stage !== "UNDER_REVIEW" && (
+                          <StageBtn id={t.id} stage="UNDER_REVIEW" label="Start review" className="bg-ink text-white hover:bg-ink-soft" />
+                        )}
+                        <StageBtn id={t.id} stage="ACCEPTED" label="Accept" className="bg-green-600 text-white hover:bg-green-700" />
+                        <StageBtn id={t.id} stage="REJECTED" label="Reject" className="border border-gray-300 text-ink-soft hover:border-ink" />
+                      </div>
+                    )}
+                  </div>
+                </li>
+              );
+            })}
+          </ul>
+        )}
+      </Panel>
 
       <Panel title="Recent bookings" hint={`Confirmed revenue (shown): ${formatNaira(revenue)}`}>
         {bookings.length === 0 ? (
@@ -207,4 +261,26 @@ function Panel({ title, hint, children }: { title: string; hint?: string; childr
 
 function Empty() {
   return <p className="py-3 text-sm text-ink-muted">Nothing yet.</p>;
+}
+
+function StageBtn({
+  id,
+  stage,
+  label,
+  className,
+}: {
+  id: string;
+  stage: string;
+  label: string;
+  className: string;
+}) {
+  return (
+    <form action={setTenancyStage}>
+      <input type="hidden" name="id" value={id} />
+      <input type="hidden" name="stage" value={stage} />
+      <button type="submit" className={`rounded-md px-2 py-1 text-xs font-semibold ${className}`}>
+        {label}
+      </button>
+    </form>
+  );
 }

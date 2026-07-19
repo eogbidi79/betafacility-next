@@ -4,6 +4,7 @@ import { parseJson, ok, serverError } from "@/lib/api";
 import { makeReference } from "@/lib/reference";
 import { sendEmail, emailLayout, notifyTo } from "@/lib/email";
 import { formatNaira } from "@/lib/utils";
+import { notifyBookingCancelled } from "@/lib/notifications";
 import { NextResponse } from "next/server";
 
 export const runtime = "nodejs";
@@ -65,6 +66,7 @@ export async function POST(
       });
     }
 
+    await notifyBookingCancelled({ ...booking, refundOutcome }, voucherCode);
     await sendEmail({
       to: [notifyTo.payments, notifyTo.admin],
       subject: `Booking cancelled — ${reference} (${refundOutcome})`,

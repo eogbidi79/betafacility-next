@@ -4,10 +4,36 @@ import { ListingStatus, RequestStatus } from "@prisma/client";
 import { revalidatePath } from "next/cache";
 import { auth } from "@/auth";
 import { prisma } from "@/lib/db";
+import {
+  notifyTenancyUnderReview,
+  notifyTenancyAccepted,
+  notifyTenancyRejected,
+} from "@/lib/notifications";
 
 async function requireAuth() {
   const session = await auth();
   if (!session?.user) throw new Error("Unauthorized");
+}
+
+const TENANCY_STAGES = ["UNDER_REVIEW", "ACCEPTED", "REJECTED"] as const;
+
+export async function setTenancyStage(formData: FormData) {
+  await requireAuth();
+  const id = String(formData.get("id") ?? "");
+  const stage = String(formData.get("stage") ?? "");
+  if (!id || !TENANCY_STAGES.includes(stage as (typeof TENANCY_STAGES)[number])) return;
+
+  const booking = await prisma.booking.update({
+    where: { id },
+    data: { stage },
+  });
+
+  // Notify the applicant of the outcome of this stage.
+  if (stage === "UNDER_REVIEW") await notifyTenancyUnderReview(booking);
+  else if (stage === "ACCEPTED") await notifyTenancyAccepted(booking);
+  else if (stage === "REJECTED") await notifyTenancyRejected(booking);
+
+  revalidatePath("/portal");
 }
 
 export async function setListingStatus(formData: FormData) {

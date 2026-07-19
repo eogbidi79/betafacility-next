@@ -2,8 +2,9 @@ import { prisma } from "@/lib/db";
 import { tenancySchema } from "@/lib/validation";
 import { parseJson, ok, serverError } from "@/lib/api";
 import { makeReference } from "@/lib/reference";
-import { sendEmail, emailLayout, notifyTo } from "@/lib/email";
 import { formatNaira } from "@/lib/utils";
+import { notifyTenancyApplied, notifyStaff } from "@/lib/notifications";
+import { notifyTo } from "@/lib/email";
 import { properties } from "@/data/properties";
 import { NextResponse } from "next/server";
 
@@ -24,10 +25,12 @@ export async function POST(req: Request) {
     const end = new Date(start);
     end.setFullYear(end.getFullYear() + 1);
 
+    // Application-first: no payment until the application is reviewed and accepted.
     const booking = await prisma.booking.create({
       data: {
         reference: makeReference("TEN"),
         term: "long-term",
+        stage: "APPLIED",
         propertySlug: property.slug,
         propertyTitle: property.title,
         propertyAddress: property.address,
@@ -36,6 +39,8 @@ export async function POST(req: Request) {
         guestEmail: d.guestEmail,
         guestPhone: d.guestPhone,
         tenantAddress: d.tenantAddress,
+        guarantorName: d.guarantorName,
+        guarantorPhone: d.guarantorPhone,
         checkIn: start,
         checkOut: end,
         nights: 365,
@@ -44,26 +49,25 @@ export async function POST(req: Request) {
       },
     });
 
-    await sendEmail({
-      to: [notifyTo.payments, notifyTo.admin],
-      subject: `New 1-year tenancy application (pending) — ${booking.reference}`,
-      html: emailLayout("New tenancy application", [
+    await notifyTenancyApplied(booking);
+    await notifyStaff(
+      `New 1-year tenancy application — ${booking.reference}`,
+      [
         ["Reference", booking.reference],
         ["Property", property.title],
-        ["Address", property.address],
-        ["Applicant", d.guestName],
-        ["Email", d.guestEmail],
-        ["Phone", d.guestPhone],
+        ["Applicant", `${d.guestName} · ${d.guestEmail} · ${d.guestPhone}`],
+        ["Guarantor", `${d.guarantorName} · ${d.guarantorPhone}`],
         ["Annual rent", formatNaira(property.pricePerYear)],
-      ]),
-    });
+      ],
+      [notifyTo.sales, notifyTo.admin],
+    );
 
     return ok(
       {
         reference: booking.reference,
-        amount: property.pricePerYear,
+        stage: "APPLIED",
         term: "long-term",
-        message: "Tenancy application created (pending payment)",
+        message: "Application received — we'll review and email you.",
       },
       201,
     );

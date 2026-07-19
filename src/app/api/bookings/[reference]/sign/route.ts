@@ -1,8 +1,7 @@
 import { prisma } from "@/lib/db";
 import { signSchema } from "@/lib/validation";
 import { parseJson, ok, serverError } from "@/lib/api";
-import { sendEmail, emailLayout, notifyTo } from "@/lib/email";
-import { formatNaira } from "@/lib/utils";
+import { notifyAgreementSigned } from "@/lib/notifications";
 import { site } from "@/data/site";
 import { NextResponse } from "next/server";
 
@@ -60,23 +59,8 @@ export async function POST(
       ? `/bookings/${reference}/agreement`
       : `/bookings/${reference}/invoice`;
 
-    await sendEmail({
-      to: booking.guestEmail,
-      replyTo: notifyTo.contact,
-      subject: isLongTerm
-        ? `Your signed tenancy agreement — ${reference}`
-        : `Your BetaFacility booking receipt — ${reference}`,
-      html: emailLayout(
-        isLongTerm ? "Tenancy agreement signed" : "Booking confirmed",
-        [
-          ["Reference", reference],
-          [isLongTerm ? "Annual rent" : "Amount paid", formatNaira(booking.amount)],
-        ],
-        isLongTerm
-          ? "Your 1-year tenancy agreement is signed by all parties. A copy is available in your account."
-          : "Thank you — your booking is confirmed. Your receipt and invoice are available in your account.",
-      ),
-    });
+    const signed = await prisma.booking.findUnique({ where: { reference } });
+    if (signed) await notifyAgreementSigned(signed);
 
     return ok({ reference, status: "SIGNED", receiptUrl: `/bookings/${reference}/receipt`, docUrl });
   } catch (err) {

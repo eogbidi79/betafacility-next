@@ -1,6 +1,7 @@
 import { prisma } from "@/lib/db";
 import { verifyTransaction, isPaystackConfigured } from "@/lib/paystack";
-import { sendEmail, emailLayout, notifyTo } from "@/lib/email";
+import { notifyPaymentReceived, notifyShortPaymentAccepted, notifyStaff } from "@/lib/notifications";
+import { notifyTo } from "@/lib/email";
 import { formatNaira } from "@/lib/utils";
 import { NextResponse } from "next/server";
 
@@ -43,22 +44,27 @@ export async function GET(req: Request) {
     return NextResponse.redirect(new URL(`/bookings/${reference}/pay?status=failed`, origin));
   }
 
-  await prisma.booking.update({
+  const updated = await prisma.booking.update({
     where: { reference },
     data: { status: "PAID", paidAt, paymentRef: reference },
   });
 
-  await sendEmail({
-    to: [notifyTo.payments, notifyTo.admin],
-    subject: `Payment received — ${reference}`,
-    html: emailLayout("Booking payment received", [
+  // Prospect-facing confirmation (long-term → e-sign next; short-term → invoice + T&C).
+  if (updated.term === "long-term") {
+    await notifyPaymentReceived(updated);
+  } else {
+    await notifyShortPaymentAccepted(updated);
+  }
+  await notifyStaff(
+    `Payment received — ${reference}`,
+    [
       ["Reference", reference],
       ["Guest", booking.guestName],
-      ["Email", booking.guestEmail],
       ["Amount", formatNaira(booking.amount)],
-      ["Nights", String(booking.nights)],
-    ]),
-  });
+      ["Term", booking.term],
+    ],
+    [notifyTo.payments, notifyTo.admin],
+  );
 
   return NextResponse.redirect(new URL(nextStep(booking), origin));
 }

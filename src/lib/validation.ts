@@ -68,6 +68,8 @@ export const tenancySchema = z.object({
   guestEmail: email,
   guestPhone: phone,
   tenantAddress: z.string().trim().min(4, "Enter your current address").max(300),
+  guarantorName: z.string().trim().min(2, "Enter your guarantor's name").max(120),
+  guarantorPhone: z.string().trim().min(7, "Enter your guarantor's phone").max(30),
   startDate: z.coerce.date(),
 });
 export type TenancyInput = z.infer<typeof tenancySchema>;

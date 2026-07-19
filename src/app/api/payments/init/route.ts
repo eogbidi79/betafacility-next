@@ -28,6 +28,19 @@ export async function POST(req: Request) {
       return ok({ authorizationUrl: step, alreadyPaid: true });
     }
 
+    // Long-term tenancies can only be paid once the application is accepted.
+    if (booking.term === "long-term" && booking.stage !== "ACCEPTED") {
+      return NextResponse.json(
+        {
+          error:
+            booking.stage === "REJECTED"
+              ? "This application was not accepted."
+              : "Your application is still under review. Payment opens once it's accepted.",
+        },
+        { status: 409 },
+      );
+    }
+
     // Fully covered by a voucher — nothing to charge; confirm immediately.
     if (booking.amount <= 0) {
       await prisma.booking.update({

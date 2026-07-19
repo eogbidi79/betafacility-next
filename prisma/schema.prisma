@@ -69,6 +69,12 @@ model Booking {
   propertyAddress String?
   landlordName    String?
 
+  // Long-term application workflow:
+  // APPLIED -> UNDER_REVIEW -> ACCEPTED (pay) | REJECTED
+  stage          String?
+  guarantorName  String?
+  guarantorPhone String?
+
   guestName    String
   guestEmail   String
   guestPhone   String

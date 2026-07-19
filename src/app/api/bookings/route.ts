@@ -5,6 +5,7 @@ import { makeReference } from "@/lib/reference";
 import { sendEmail, emailLayout, notifyTo } from "@/lib/email";
 import { formatNaira } from "@/lib/utils";
 import { computeNights, PENDING_HOLD_MS } from "@/lib/booking";
+import { notifyShortBookingReceived } from "@/lib/notifications";
 import { NextResponse } from "next/server";
 
 export const runtime = "nodejs";
@@ -101,6 +102,8 @@ export async function POST(req: Request) {
         ["Amount due", formatNaira(amount)],
       ]),
     });
+
+    await notifyShortBookingReceived(booking);
 
     return ok(
       {
