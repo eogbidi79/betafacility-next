@@ -55,27 +55,53 @@ enum BookingStatus {
 }
 
 model Booking {
-  id           String        @id @default(cuid())
-  reference    String        @unique
-  rental       Rental        @relation(fields: [rentalId], references: [id])
-  rentalId     String
+  id       String @id @default(cuid())
+  reference String @unique
+  term     String @default("short-term") // "short-term" | "long-term"
+
+  // Short-term stays reference a bookable Rental unit.
+  rental   Rental? @relation(fields: [rentalId], references: [id])
+  rentalId String?
+
+  // Long-term tenancies snapshot the managed property + landlord at booking time.
+  propertySlug    String?
+  propertyTitle   String?
+  propertyAddress String?
+  landlordName    String?
+
   guestName    String
   guestEmail   String
   guestPhone   String
+  tenantAddress String?
   checkIn      DateTime
   checkOut     DateTime
   nights       Int
   amount       Int
   status       BookingStatus @default(PENDING)
-  // Payment (Paystack) — populated once a provider is wired
-  paymentRef   String?
-  paidAt       DateTime?
-  // E-signature — data URL / stored signature reference
+
+  // Payment (Paystack)
+  paymentRef String?
+  paidAt     DateTime?
+
+  // Tenant e-signature (data URL)
   signatureRef String?
   signedAt     DateTime?
-  user         User?         @relation(fields: [userId], references: [id])
-  userId       String?
-  createdAt    DateTime      @default(now())
+
+  // Long-term tenancy: explicit inflation-clause consent + counter sign-offs
+  inflationConsent   Boolean   @default(false)
+  inflationConsentAt DateTime?
+  repName            String?
+  repSignedAt        DateTime?
+  landlordSignedAt   DateTime?
+
+  // Cancellation / refund (short-term)
+  cancelledAt   DateTime?
+  refundOutcome String? // "refundable" | "voucher" | "none"
+  voucherCode   String?
+
+  user      User?    @relation(fields: [userId], references: [id])
+  userId    String?
+  createdAt DateTime @default(now())
 }
 
 enum RequestStatus {

@@ -27,3 +27,33 @@
     font-variant-numeric: tabular-nums;
   }
 }
+
+/* A4 legal documents (tenancy agreement / invoice) */
+.doc-a4 {
+  width: 210mm;
+  max-width: 100%;
+  margin-inline: auto;
+}
+
+@media print {
+  @page {
+    size: A4;
+    margin: 16mm;
+  }
+  body {
+    background: #fff;
+  }
+  header,
+  footer,
+  .print\:hidden {
+    display: none !important;
+  }
+  .doc-a4 {
+    width: auto;
+    box-shadow: none !important;
+    border: none !important;
+  }
+  .doc-page-break {
+    page-break-before: always;
+  }
+}

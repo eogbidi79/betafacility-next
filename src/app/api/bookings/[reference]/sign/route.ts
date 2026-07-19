@@ -1,22 +1,19 @@
-import { z } from "zod";
 import { prisma } from "@/lib/db";
+import { signSchema } from "@/lib/validation";
 import { parseJson, ok, serverError } from "@/lib/api";
 import { sendEmail, emailLayout, notifyTo } from "@/lib/email";
 import { formatNaira } from "@/lib/utils";
+import { site } from "@/data/site";
 import { NextResponse } from "next/server";
 
 export const runtime = "nodejs";
-
-const schema = z.object({
-  signature: z.string().min(20, "Signature required").max(500_000),
-});
 
 export async function POST(
   req: Request,
   { params }: { params: Promise<{ reference: string }> },
 ) {
   const { reference } = await params;
-  const parsed = await parseJson(req, schema);
+  const parsed = await parseJson(req, signSchema);
   if (!parsed.ok) return parsed.response;
 
   try {
@@ -27,28 +24,61 @@ export async function POST(
     if (booking.status === "PENDING") {
       return NextResponse.json({ error: "Payment required before signing" }, { status: 409 });
     }
+    if (booking.status === "CANCELLED") {
+      return NextResponse.json({ error: "This booking was cancelled" }, { status: 409 });
+    }
 
+    const isLongTerm = booking.term === "long-term";
+    if (isLongTerm && !parsed.data.inflationConsent) {
+      return NextResponse.json(
+        { error: "You must accept the rent-review (inflation) clause before signing." },
+        { status: 422 },
+      );
+    }
+
+    const now = new Date();
     await prisma.booking.update({
       where: { reference },
-      data: { status: "SIGNED", signatureRef: parsed.data.signature, signedAt: new Date() },
+      data: {
+        status: "SIGNED",
+        signatureRef: parsed.data.signature,
+        signedAt: now,
+        ...(isLongTerm
+          ? {
+              inflationConsent: true,
+              inflationConsentAt: now,
+              // Managing agent counter-signs on record; landlord sign-off logged.
+              repName: site.representative.name,
+              repSignedAt: now,
+              landlordSignedAt: now,
+            }
+          : {}),
+      },
     });
+
+    const docUrl = isLongTerm
+      ? `/bookings/${reference}/agreement`
+      : `/bookings/${reference}/invoice`;
 
     await sendEmail({
       to: booking.guestEmail,
       replyTo: notifyTo.contact,
-      subject: `Your BetaFacility booking receipt — ${reference}`,
+      subject: isLongTerm
+        ? `Your signed tenancy agreement — ${reference}`
+        : `Your BetaFacility booking receipt — ${reference}`,
       html: emailLayout(
-        "Booking confirmed",
+        isLongTerm ? "Tenancy agreement signed" : "Booking confirmed",
         [
           ["Reference", reference],
-          ["Amount paid", formatNaira(booking.amount)],
-          ["Nights", String(booking.nights)],
+          [isLongTerm ? "Annual rent" : "Amount paid", formatNaira(booking.amount)],
         ],
-        "Thank you — your agreement is signed and your booking is confirmed. Your receipt is attached to your account.",
+        isLongTerm
+          ? "Your 1-year tenancy agreement is signed by all parties. A copy is available in your account."
+          : "Thank you — your booking is confirmed. Your receipt and invoice are available in your account.",
       ),
     });
 
-    return ok({ reference, status: "SIGNED", receiptUrl: `/bookings/${reference}/receipt` });
+    return ok({ reference, status: "SIGNED", receiptUrl: `/bookings/${reference}/receipt`, docUrl });
   } catch (err) {
     console.error("sign failed", err);
     return serverError();

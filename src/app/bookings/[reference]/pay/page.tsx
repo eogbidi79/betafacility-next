@@ -37,7 +37,9 @@ export default async function SimPayPage({
         <dl className="mt-5 space-y-2 text-sm">
           <div className="flex justify-between">
             <dt className="text-ink-muted">Rental</dt>
-            <dd className="font-medium text-ink">{booking.rental.title}</dd>
+            <dd className="font-medium text-ink">
+              {booking.rental?.title ?? booking.propertyTitle ?? "Booking"}
+            </dd>
           </div>
           <div className="flex justify-between">
             <dt className="text-ink-muted">Reference</dt>

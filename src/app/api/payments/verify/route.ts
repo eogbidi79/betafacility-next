@@ -20,8 +20,11 @@ export async function GET(req: Request) {
     return NextResponse.redirect(new URL("/rentals?payment=not-found", origin));
   }
 
+  const nextStep = (b: { term: string }) =>
+    b.term === "long-term" ? `/bookings/${reference}/agreement` : `/bookings/${reference}/invoice`;
+
   if (booking.status === "PAID" || booking.status === "SIGNED") {
-    return NextResponse.redirect(new URL(`/bookings/${reference}/sign`, origin));
+    return NextResponse.redirect(new URL(nextStep(booking), origin));
   }
 
   let paid = false;
@@ -57,5 +60,5 @@ export async function GET(req: Request) {
     ]),
   });
 
-  return NextResponse.redirect(new URL(`/bookings/${reference}/sign`, origin));
+  return NextResponse.redirect(new URL(nextStep(booking), origin));
 }

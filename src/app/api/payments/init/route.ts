@@ -21,7 +21,11 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: "Booking not found" }, { status: 404 });
     }
     if (booking.status === "PAID" || booking.status === "SIGNED") {
-      return ok({ authorizationUrl: `/bookings/${booking.reference}/sign`, alreadyPaid: true });
+      const step =
+        booking.term === "long-term"
+          ? `/bookings/${booking.reference}/agreement`
+          : `/bookings/${booking.reference}/invoice`;
+      return ok({ authorizationUrl: step, alreadyPaid: true });
     }
 
     if (!isPaystackConfigured()) {
@@ -36,7 +40,10 @@ export async function POST(req: Request) {
       reference: booking.reference,
       email: booking.guestEmail,
       amountNaira: booking.amount,
-      metadata: { bookingRef: booking.reference, rental: booking.rental.title },
+      metadata: {
+        bookingRef: booking.reference,
+        item: booking.rental?.title ?? booking.propertyTitle ?? booking.term,
+      },
     });
     return ok({ authorizationUrl });
   } catch (err) {

@@ -60,3 +60,22 @@ export const bookingSchema = z
     path: ["checkOut"],
   });
 export type BookingInput = z.infer<typeof bookingSchema>;
+
+export const tenancySchema = z.object({
+  propertySlug: z.string().trim().min(1, "Select a property"),
+  guestName: name,
+  guestEmail: email,
+  guestPhone: phone,
+  tenantAddress: z.string().trim().min(4, "Enter your current address").max(300),
+  startDate: z.coerce.date(),
+});
+export type TenancyInput = z.infer<typeof tenancySchema>;
+
+export const cancelSchema = z.object({
+  reason: z.string().trim().max(500).optional().or(z.literal("")),
+});
+
+export const signSchema = z.object({
+  signature: z.string().min(20, "Signature required").max(500_000),
+  inflationConsent: z.boolean().optional(),
+});

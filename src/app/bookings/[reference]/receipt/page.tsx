@@ -28,15 +28,27 @@ export default async function ReceiptPage({
   if (!booking) notFound();
 
   const paid = booking.status === "PAID" || booking.status === "SIGNED";
+  const isLong = booking.term === "long-term";
+  const unitTitle = isLong ? booking.propertyTitle ?? "Property" : booking.rental?.title ?? "Rental";
+  const unitLoc = isLong ? booking.propertyAddress ?? "—" : booking.rental?.location ?? "—";
+  const docHref = `/bookings/${booking.reference}/${isLong ? "agreement" : "invoice"}`;
+  const docLabel = isLong ? "View agreement" : "View invoice";
 
   return (
     <Container className="py-12 sm:py-16">
       <div className="mx-auto max-w-2xl">
-        <div className="mb-6 flex items-center justify-between print:hidden">
+        <div className="mb-6 flex items-center justify-between gap-3 print:hidden">
           <ButtonLink href="/rentals" variant="ghost" size="sm">
             ← Back to rentals
           </ButtonLink>
-          <PrintButton />
+          <div className="flex gap-2">
+            {paid && (
+              <ButtonLink href={docHref} variant="outline" size="sm">
+                {docLabel}
+              </ButtonLink>
+            )}
+            <PrintButton />
+          </div>
         </div>
 
         <div className="overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-card">
@@ -61,16 +73,23 @@ export default async function ReceiptPage({
             </div>
 
             <dl className="mt-5 grid grid-cols-2 gap-x-6 gap-y-3 text-sm">
-              <Row label="Guest" value={booking.guestName} />
+              <Row label={isLong ? "Tenant" : "Guest"} value={booking.guestName} />
               <Row label="Email" value={booking.guestEmail} />
-              <Row label="Rental" value={booking.rental.title} />
-              <Row label="Location" value={booking.rental.location} />
-              <Row label="Check-in" value={fmtDate(booking.checkIn)} />
-              <Row label="Check-out" value={fmtDate(booking.checkOut)} />
-              <Row label="Nights" value={String(booking.nights)} />
-              <Row label="Rate / night" value={formatNaira(booking.rental.pricePerNight)} />
+              <Row label={isLong ? "Property" : "Rental"} value={unitTitle} />
+              <Row label={isLong ? "Address" : "Location"} value={unitLoc} />
+              <Row label={isLong ? "Start" : "Check-in"} value={fmtDate(booking.checkIn)} />
+              <Row label={isLong ? "End" : "Check-out"} value={fmtDate(booking.checkOut)} />
+              {isLong ? (
+                <Row label="Term" value="12 months" />
+              ) : (
+                <Row label="Nights" value={String(booking.nights)} />
+              )}
+              <Row
+                label={isLong ? "Annual rent" : "Rate / night"}
+                value={formatNaira(isLong ? booking.amount : booking.rental?.pricePerNight ?? 0)}
+              />
               <Row label="Paid on" value={fmtDate(booking.paidAt)} />
-              <Row label="Signed on" value={fmtDate(booking.signedAt)} />
+              <Row label={isLong ? "Signed on" : "Status"} value={isLong ? fmtDate(booking.signedAt) : booking.status} />
             </dl>
 
             <div className="mt-6 flex items-center justify-between border-t border-gray-100 pt-4">

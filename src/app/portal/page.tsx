@@ -63,8 +63,11 @@ export default async function PortalPage() {
               <li key={b.id} className="flex items-center justify-between gap-4 py-3 text-sm">
                 <div>
                   <p className="font-medium text-ink">
-                    {b.rental.title}{" "}
+                    {b.rental?.title ?? b.propertyTitle ?? "Booking"}{" "}
                     <span className="text-ink-muted">· {b.guestName}</span>
+                    {b.term === "long-term" && (
+                      <span className="ml-1 text-xs font-semibold text-brand-600">1-yr</span>
+                    )}
                   </p>
                   <p className="text-xs text-ink-muted tabular">
                     {b.reference} · {since(b.createdAt)}

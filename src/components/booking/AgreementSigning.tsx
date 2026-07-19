@@ -3,11 +3,13 @@
 import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/Button";
+import { INFLATION_CLAUSE } from "@/data/legal";
 
-export function SignaturePad({ reference }: { reference: string }) {
+export function AgreementSigning({ reference }: { reference: string }) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const drawing = useRef(false);
   const dirty = useRef(false);
+  const [consent, setConsent] = useState(false);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const router = useRouter();
@@ -17,7 +19,6 @@ export function SignaturePad({ reference }: { reference: string }) {
     if (!canvas) return;
     const ctx = canvas.getContext("2d");
     if (!ctx) return;
-    // Scale for crisp lines on HiDPI.
     const ratio = window.devicePixelRatio || 1;
     const rect = canvas.getBoundingClientRect();
     canvas.width = rect.width * ratio;
@@ -28,35 +29,31 @@ export function SignaturePad({ reference }: { reference: string }) {
     ctx.strokeStyle = "#1a1a1a";
   }, []);
 
-  function pos(e: React.PointerEvent<HTMLCanvasElement>) {
+  function point(e: React.PointerEvent<HTMLCanvasElement>) {
     const rect = e.currentTarget.getBoundingClientRect();
     return { x: e.clientX - rect.left, y: e.clientY - rect.top };
   }
-
   function start(e: React.PointerEvent<HTMLCanvasElement>) {
     const ctx = canvasRef.current?.getContext("2d");
     if (!ctx) return;
     drawing.current = true;
     dirty.current = true;
-    const { x, y } = pos(e);
+    const { x, y } = point(e);
     ctx.beginPath();
     ctx.moveTo(x, y);
     e.currentTarget.setPointerCapture(e.pointerId);
   }
-
   function move(e: React.PointerEvent<HTMLCanvasElement>) {
     if (!drawing.current) return;
     const ctx = canvasRef.current?.getContext("2d");
     if (!ctx) return;
-    const { x, y } = pos(e);
+    const { x, y } = point(e);
     ctx.lineTo(x, y);
     ctx.stroke();
   }
-
   function end() {
     drawing.current = false;
   }
-
   function clear() {
     const canvas = canvasRef.current;
     const ctx = canvas?.getContext("2d");
@@ -64,9 +61,13 @@ export function SignaturePad({ reference }: { reference: string }) {
     dirty.current = false;
   }
 
-  async function confirm() {
+  async function submit() {
+    if (!consent) {
+      setError("Please accept the rent-review (inflation) clause to continue.");
+      return;
+    }
     if (!dirty.current) {
-      setError("Please draw your signature first.");
+      setError("Please draw your signature.");
       return;
     }
     setBusy(true);
@@ -76,15 +77,15 @@ export function SignaturePad({ reference }: { reference: string }) {
       const res = await fetch(`/api/bookings/${reference}/sign`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ signature }),
+        body: JSON.stringify({ signature, inflationConsent: consent }),
       });
       const json = await res.json();
       if (!res.ok) {
-        setError(json.error || "Could not save signature.");
+        setError(json.error || "Could not sign the agreement.");
         setBusy(false);
         return;
       }
-      router.push(`/bookings/${reference}/receipt`);
+      router.refresh();
     } catch {
       setError("Network error. Please try again.");
       setBusy(false);
@@ -92,18 +93,32 @@ export function SignaturePad({ reference }: { reference: string }) {
   }
 
   return (
-    <div>
-      <div className="overflow-hidden rounded-xl border-2 border-dashed border-gray-300 bg-gray-50">
+    <div className="print:hidden">
+      <div className="rounded-xl border border-amber-300 bg-amber-50 p-4">
+        <p className="text-sm font-bold text-amber-800">{INFLATION_CLAUSE.heading}</p>
+        <p className="mt-1 text-sm leading-relaxed text-amber-900">{INFLATION_CLAUSE.body}</p>
+        <label className="mt-3 flex items-start gap-2 text-sm font-medium text-ink">
+          <input
+            type="checkbox"
+            checked={consent}
+            onChange={(e) => setConsent(e.target.checked)}
+            className="mt-0.5 h-4 w-4 rounded border-gray-300 text-brand-500"
+          />
+          I have read and accept the rent-review (inflation) clause above.
+        </label>
+      </div>
+
+      <p className="mt-6 text-sm font-semibold text-ink">Tenant signature</p>
+      <div className="mt-2 overflow-hidden rounded-xl border-2 border-dashed border-gray-300">
         <canvas
           ref={canvasRef}
           onPointerDown={start}
           onPointerMove={move}
           onPointerUp={end}
           onPointerLeave={end}
-          className="h-48 w-full touch-none bg-white"
+          className="h-40 w-full touch-none bg-white"
         />
       </div>
-      <p className="mt-2 text-xs text-ink-muted">Draw your signature in the box above.</p>
 
       {error && (
         <p className="mt-3 rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">
@@ -115,8 +130,8 @@ export function SignaturePad({ reference }: { reference: string }) {
         <Button variant="outline" onClick={clear} disabled={busy}>
           Clear
         </Button>
-        <Button onClick={confirm} disabled={busy} className="flex-1">
-          {busy ? "Saving…" : "Confirm & Sign"}
+        <Button onClick={submit} disabled={busy || !consent} className="flex-1">
+          {busy ? "Signing…" : "Accept & Sign Agreement"}
         </Button>
       </div>
     </div>

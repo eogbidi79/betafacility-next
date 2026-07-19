@@ -22,6 +22,13 @@ export const site = {
     { day: "Saturday", time: "9:00 AM – 2:00 PM" },
     { day: "Sunday", time: "Closed" },
   ],
+  // Authorised representative who counter-signs tenancy agreements.
+  representative: {
+    name: "Angela Okojie",
+    title: "Property Manager",
+    email: "angela.okojie@betafacility.com",
+  },
+  rcNumber: "RC 1234567",
   social: [
     { label: "Facebook", href: "#" },
     { label: "Twitter", href: "#" },

@@ -5,6 +5,7 @@ import type { Metadata } from "next";
 import { Container } from "@/components/ui/Container";
 import { Badge } from "@/components/ui/Badge";
 import { ButtonLink } from "@/components/ui/Button";
+import { RentTenancyButton } from "@/components/booking/RentTenancyButton";
 import { properties } from "@/data/properties";
 import { site } from "@/data/site";
 import { formatNaira } from "@/lib/utils";
@@ -112,10 +113,15 @@ export default async function PropertyDetailPage({
           </dl>
 
           <div className="mt-8 space-y-3">
-            <ButtonLink href="/contact" size="lg" fullWidth>
+            <RentTenancyButton
+              slug={property.slug}
+              title={property.title}
+              pricePerYear={property.pricePerYear}
+            />
+            <ButtonLink href="/contact" size="lg" variant="outline" fullWidth>
               Inquire About This Property
             </ButtonLink>
-            <ButtonLink href={site.phoneHref} size="lg" variant="outline" fullWidth>
+            <ButtonLink href={site.phoneHref} size="lg" variant="ghost" fullWidth>
               Call {site.phone}
             </ButtonLink>
           </div>
