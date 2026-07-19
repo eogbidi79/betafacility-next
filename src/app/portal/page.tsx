@@ -4,6 +4,9 @@ import { Container } from "@/components/ui/Container";
 import { Badge } from "@/components/ui/Badge";
 import { SignOutButton } from "@/components/portal/SignOutButton";
 import { formatNaira } from "@/lib/utils";
+import { setListingStatus, setMaintenanceStatus } from "./actions";
+
+const MAINT_STATUSES = ["NEW", "IN_PROGRESS", "RESOLVED", "CLOSED"] as const;
 
 export const dynamic = "force-dynamic";
 export const metadata = { title: "Portal", robots: { index: false } };
@@ -96,11 +99,33 @@ export default async function PortalPage() {
           {maintenance.length === 0 ? <Empty /> : (
             <ul className="divide-y divide-gray-100">
               {maintenance.map((m) => (
-                <li key={m.id} className="py-3 text-sm">
-                  <p className="font-medium text-ink">
-                    {m.fullName} <span className="text-ink-muted">· {m.category || m.service || m.kind}</span>
-                  </p>
-                  <p className="text-xs text-ink-muted tabular">{m.reference} · {m.unit} · {since(m.createdAt)}</p>
+                <li key={m.id} className="flex items-center justify-between gap-4 py-3 text-sm">
+                  <div>
+                    <p className="font-medium text-ink">
+                      {m.fullName} <span className="text-ink-muted">· {m.category || m.service || m.kind}</span>
+                    </p>
+                    <p className="text-xs text-ink-muted tabular">{m.reference} · {m.unit} · {since(m.createdAt)}</p>
+                  </div>
+                  <form action={setMaintenanceStatus} className="flex items-center gap-1.5">
+                    <input type="hidden" name="id" value={m.id} />
+                    <select
+                      name="status"
+                      defaultValue={m.status}
+                      className="rounded-md border border-gray-300 bg-white px-2 py-1 text-xs text-ink"
+                    >
+                      {MAINT_STATUSES.map((s) => (
+                        <option key={s} value={s}>
+                          {s.replace("_", " ")}
+                        </option>
+                      ))}
+                    </select>
+                    <button
+                      type="submit"
+                      className="rounded-md bg-ink px-2.5 py-1 text-xs font-semibold text-white hover:bg-ink-soft"
+                    >
+                      Save
+                    </button>
+                  </form>
                 </li>
               ))}
             </ul>
@@ -118,7 +143,33 @@ export default async function PortalPage() {
                   </div>
                   <div className="flex items-center gap-3">
                     <span className="font-semibold text-ink">{formatNaira(a.price)}</span>
-                    <Badge tone="neutral">{a.status}</Badge>
+                    <Badge tone={a.status === "APPROVED" ? "success" : a.status === "REJECTED" ? "neutral" : "brand"}>
+                      {a.status}
+                    </Badge>
+                    <div className="flex gap-1">
+                      <form action={setListingStatus}>
+                        <input type="hidden" name="id" value={a.id} />
+                        <input type="hidden" name="status" value="APPROVED" />
+                        <button
+                          type="submit"
+                          disabled={a.status === "APPROVED"}
+                          className="rounded-md bg-green-600 px-2 py-1 text-xs font-semibold text-white hover:bg-green-700 disabled:opacity-40"
+                        >
+                          Approve
+                        </button>
+                      </form>
+                      <form action={setListingStatus}>
+                        <input type="hidden" name="id" value={a.id} />
+                        <input type="hidden" name="status" value="REJECTED" />
+                        <button
+                          type="submit"
+                          disabled={a.status === "REJECTED"}
+                          className="rounded-md border border-gray-300 px-2 py-1 text-xs font-semibold text-ink-soft hover:border-ink disabled:opacity-40"
+                        >
+                          Reject
+                        </button>
+                      </form>
+                    </div>
                   </div>
                 </li>
               ))}

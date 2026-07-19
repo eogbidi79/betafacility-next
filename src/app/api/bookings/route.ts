@@ -23,6 +23,27 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: "Rental not available" }, { status: 404 });
     }
 
+    // Availability: block overbooking. A unit is occupied for overlapping dates
+    // by confirmed bookings (PAID/SIGNED) or a recent PENDING hold (30 min).
+    const HOLD_MS = 30 * 60 * 1000;
+    const overlapping = await prisma.booking.count({
+      where: {
+        rentalId: rental.id,
+        checkIn: { lt: d.checkOut },
+        checkOut: { gt: d.checkIn },
+        OR: [
+          { status: { in: ["PAID", "SIGNED"] } },
+          { status: "PENDING", createdAt: { gte: new Date(Date.now() - HOLD_MS) } },
+        ],
+      },
+    });
+    if (overlapping >= rental.unitsTotal) {
+      return NextResponse.json(
+        { error: "No units available for the selected dates. Please try different dates." },
+        { status: 409 },
+      );
+    }
+
     const nights = Math.max(
       1,
       Math.round((d.checkOut.getTime() - d.checkIn.getTime()) / MS_PER_DAY),
