@@ -43,7 +43,24 @@ export async function POST(req: Request) {
     }
 
     const nights = computeNights(d.checkIn, d.checkOut);
-    const amount = nights * rental.pricePerNight;
+    const gross = nights * rental.pricePerNight;
+
+    // Optional voucher redemption (from a prior late-cancellation).
+    let discount = 0;
+    let appliedVoucherCode: string | null = null;
+    if (d.voucherCode) {
+      const voucher = await prisma.voucher.findUnique({ where: { code: d.voucherCode } });
+      if (!voucher || voucher.status !== "ACTIVE") {
+        return NextResponse.json(
+          { error: "That voucher code is invalid or has already been used." },
+          { status: 422 },
+        );
+      }
+      discount = Math.min(voucher.amount, gross);
+      appliedVoucherCode = voucher.code;
+    }
+
+    const amount = gross - discount;
 
     const booking = await prisma.booking.create({
       data: {
@@ -56,9 +73,19 @@ export async function POST(req: Request) {
         checkOut: d.checkOut,
         nights,
         amount,
+        voucherDiscount: discount,
+        appliedVoucherCode,
         status: "PENDING",
       },
     });
+
+    // Mark the voucher redeemed against this booking.
+    if (appliedVoucherCode) {
+      await prisma.voucher.update({
+        where: { code: appliedVoucherCode },
+        data: { status: "REDEEMED", redeemedForRef: booking.reference, redeemedAt: new Date() },
+      });
+    }
 
     await sendEmail({
       to: [notifyTo.payments, notifyTo.admin],
@@ -70,7 +97,8 @@ export async function POST(req: Request) {
         ["Email", d.guestEmail],
         ["Phone", d.guestPhone],
         ["Nights", String(nights)],
-        ["Amount", formatNaira(amount)],
+        ...(discount ? ([["Voucher", `${appliedVoucherCode} (−${formatNaira(discount)})`]] as [string, string][]) : []),
+        ["Amount due", formatNaira(amount)],
       ]),
     });
 
@@ -78,6 +106,8 @@ export async function POST(req: Request) {
       {
         reference: booking.reference,
         nights,
+        gross,
+        discount,
         amount,
         status: booking.status,
         message: "Booking created (pending payment)",

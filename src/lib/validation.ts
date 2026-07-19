@@ -54,6 +54,7 @@ export const bookingSchema = z
     guestPhone: phone,
     checkIn: z.coerce.date(),
     checkOut: z.coerce.date(),
+    voucherCode: z.string().trim().toUpperCase().optional().or(z.literal("")),
   })
   .refine((d) => d.checkOut > d.checkIn, {
     message: "Check-out must be after check-in",

@@ -31,7 +31,8 @@ export default async function InvoicePage({
   if (booking.term === "long-term") redirect(`/bookings/${reference}/agreement`);
   if (booking.status === "PENDING") redirect(`/bookings/${reference}/pay`);
 
-  const rate = booking.rental ? booking.rental.pricePerNight : Math.round(booking.amount / booking.nights);
+  const gross = booking.amount + booking.voucherDiscount;
+  const rate = booking.rental ? booking.rental.pricePerNight : Math.round(gross / booking.nights);
   const unitName = booking.rental?.title ?? "Serviced apartment";
   const cancelled = booking.status === "CANCELLED";
   const upcoming = booking.checkIn.getTime() > Date.now();
@@ -101,17 +102,23 @@ export default async function InvoicePage({
                 </td>
                 <td className="py-3 text-center tabular">{booking.nights}</td>
                 <td className="py-3 text-right tabular">{formatNaira(rate)}</td>
-                <td className="py-3 text-right font-medium tabular">{formatNaira(booking.amount)}</td>
+                <td className="py-3 text-right font-medium tabular">{formatNaira(gross)}</td>
               </tr>
             </tbody>
           </table>
 
           <div className="mt-4 flex justify-end">
-            <div className="w-56 space-y-1 text-sm">
+            <div className="w-64 space-y-1 text-sm">
               <div className="flex justify-between">
                 <span className="text-ink-muted">Subtotal</span>
-                <span className="tabular">{formatNaira(booking.amount)}</span>
+                <span className="tabular">{formatNaira(gross)}</span>
               </div>
+              {booking.voucherDiscount > 0 && (
+                <div className="flex justify-between text-green-700">
+                  <span>Voucher{booking.appliedVoucherCode ? ` (${booking.appliedVoucherCode})` : ""}</span>
+                  <span className="tabular">−{formatNaira(booking.voucherDiscount)}</span>
+                </div>
+              )}
               <div className="flex justify-between border-t border-gray-200 pt-1 text-base font-bold">
                 <span>Total {cancelled ? "" : "paid"}</span>
                 <span className="text-brand-600 tabular">{formatNaira(booking.amount)}</span>

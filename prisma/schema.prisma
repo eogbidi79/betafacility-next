@@ -97,7 +97,11 @@ model Booking {
   // Cancellation / refund (short-term)
   cancelledAt   DateTime?
   refundOutcome String? // "refundable" | "voucher" | "none"
-  voucherCode   String?
+  voucherCode   String? // voucher ISSUED when this booking was cancelled
+
+  // Voucher REDEEMED against this booking
+  appliedVoucherCode String?
+  voucherDiscount    Int     @default(0)
 
   user      User?    @relation(fields: [userId], references: [id])
   userId    String?
@@ -153,6 +157,18 @@ model AdvertiseSubmission {
   imageCount    Int           @default(0)
   status        ListingStatus @default(PENDING)
   createdAt     DateTime      @default(now())
+}
+
+model Voucher {
+  id             String    @id @default(cuid())
+  code           String    @unique
+  amount         Int
+  guestEmail     String
+  status         String    @default("ACTIVE") // ACTIVE | REDEEMED
+  issuedForRef   String? // booking reference the voucher was issued from
+  redeemedForRef String? // booking reference the voucher was redeemed on
+  createdAt      DateTime  @default(now())
+  redeemedAt     DateTime?
 }
 
 model ContactMessage {

@@ -28,6 +28,19 @@ export async function POST(req: Request) {
       return ok({ authorizationUrl: step, alreadyPaid: true });
     }
 
+    // Fully covered by a voucher — nothing to charge; confirm immediately.
+    if (booking.amount <= 0) {
+      await prisma.booking.update({
+        where: { reference: booking.reference },
+        data: { status: "PAID", paidAt: new Date() },
+      });
+      const step =
+        booking.term === "long-term"
+          ? `/bookings/${booking.reference}/agreement`
+          : `/bookings/${booking.reference}/invoice`;
+      return ok({ authorizationUrl: step, covered: true });
+    }
+
     if (!isPaystackConfigured()) {
       // Dev simulation: route to a local page that confirms a mock payment.
       return ok({

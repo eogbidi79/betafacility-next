@@ -54,6 +54,17 @@ export async function POST(
       data: { status: "CANCELLED", cancelledAt: new Date(), refundOutcome, voucherCode },
     });
 
+    if (refundOutcome === "voucher" && voucherCode) {
+      await prisma.voucher.create({
+        data: {
+          code: voucherCode,
+          amount: booking.amount,
+          guestEmail: booking.guestEmail,
+          issuedForRef: reference,
+        },
+      });
+    }
+
     await sendEmail({
       to: [notifyTo.payments, notifyTo.admin],
       subject: `Booking cancelled — ${reference} (${refundOutcome})`,

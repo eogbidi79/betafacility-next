@@ -44,6 +44,7 @@ export function BookNowButton({ slug, title, pricePerNight, size = "sm" }: Props
           guestPhone: fd.guestPhone,
           checkIn: fd.checkIn,
           checkOut: fd.checkOut,
+          voucherCode: fd.voucherCode || "",
         }),
       });
       const booking = await bookingRes.json();
@@ -135,6 +136,16 @@ export function BookNowButton({ slug, title, pricePerNight, size = "sm" }: Props
               </Field>
               <Field label="Phone" htmlFor="guestPhone" required>
                 <Input id="guestPhone" name="guestPhone" type="tel" required />
+              </Field>
+
+              <Field label="Voucher code (optional)" htmlFor="voucherCode">
+                <Input
+                  id="voucherCode"
+                  name="voucherCode"
+                  placeholder="VCHR-XXXXXXXX"
+                  autoComplete="off"
+                  className="tabular uppercase"
+                />
               </Field>
 
               {nights > 0 && (
