@@ -128,7 +128,7 @@ export async function notifyGuarantorConfirmed(b: Booking) {
       ["Applicant", b.guestName],
       ["Guarantor", `${b.guarantorName ?? "—"} · ${b.guarantorEmail ?? "—"}`],
     ],
-    [notifyTo.sales],
+    [notifyTo.sales, notifyTo.admin],
   );
 }
 

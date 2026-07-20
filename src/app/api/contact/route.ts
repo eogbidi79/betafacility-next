@@ -26,7 +26,7 @@ export async function POST(req: Request) {
       },
     });
     await sendEmail({
-      to: contactRecipient(parsed.data.inquiryType),
+      to: [contactRecipient(parsed.data.inquiryType), notifyTo.admin],
       replyTo: parsed.data.email,
       subject: `New contact: ${parsed.data.inquiryType}`,
       html: emailLayout("New contact message", [

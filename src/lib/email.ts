@@ -13,10 +13,16 @@ const FROM = process.env.EMAIL_FROM || "BetaFacility Managers <info@betafacility
 export async function sendEmail({ to, subject, html, replyTo }: SendArgs): Promise<void> {
   const key = process.env.RESEND_API_KEY;
 
+  // Normalize recipients: accept arrays and comma-separated values, dedupe.
+  const recipients = [...new Set(
+    (Array.isArray(to) ? to : [to])
+      .flatMap((t) => String(t).split(","))
+      .map((t) => t.trim())
+      .filter(Boolean),
+  )];
+
   if (!key) {
-    console.info(
-      `[email:dev] → ${Array.isArray(to) ? to.join(", ") : to} | ${subject}`,
-    );
+    console.info(`[email:dev] → ${recipients.join(", ")} | ${subject}`);
     return;
   }
 
@@ -29,7 +35,7 @@ export async function sendEmail({ to, subject, html, replyTo }: SendArgs): Promi
       },
       body: JSON.stringify({
         from: FROM,
-        to: Array.isArray(to) ? to : [to],
+        to: recipients,
         subject,
         html,
         ...(replyTo ? { reply_to: replyTo } : {}),

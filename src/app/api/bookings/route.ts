@@ -89,7 +89,7 @@ export async function POST(req: Request) {
     }
 
     await sendEmail({
-      to: [notifyTo.payments],
+      to: [notifyTo.payments, notifyTo.admin],
       subject: `New booking (pending) — ${booking.reference}`,
       html: emailLayout("New booking created", [
         ["Reference", booking.reference],
