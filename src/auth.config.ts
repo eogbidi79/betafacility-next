@@ -9,8 +9,12 @@ export const authConfig = {
   providers: [],
   callbacks: {
     authorized({ auth, request }) {
-      const isPortal = request.nextUrl.pathname.startsWith("/portal");
-      if (isPortal) return Boolean(auth?.user);
+      const path = request.nextUrl.pathname;
+      // User management is admin-only.
+      if (path.startsWith("/portal/users")) {
+        return auth?.user?.role === "ADMIN";
+      }
+      if (path.startsWith("/portal")) return Boolean(auth?.user);
       return true;
     },
     jwt({ token, user }) {

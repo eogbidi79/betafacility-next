@@ -12,7 +12,8 @@ import {
 
 async function requireAuth() {
   const session = await auth();
-  if (!session?.user) throw new Error("Unauthorized");
+  const role = session?.user?.role;
+  if (role !== "ADMIN" && role !== "STAFF") throw new Error("Forbidden");
 }
 
 const TENANCY_STAGES = ["UNDER_REVIEW", "ACCEPTED", "REJECTED"] as const;

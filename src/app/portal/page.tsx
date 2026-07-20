@@ -2,7 +2,10 @@ import { auth } from "@/auth";
 import { prisma } from "@/lib/db";
 import { Container } from "@/components/ui/Container";
 import { Badge } from "@/components/ui/Badge";
+import { ButtonLink } from "@/components/ui/Button";
 import { SignOutButton } from "@/components/portal/SignOutButton";
+import { TenantDashboard } from "@/components/portal/TenantDashboard";
+import { AgentDashboard } from "@/components/portal/AgentDashboard";
 import { formatNaira } from "@/lib/utils";
 import { setListingStatus, setMaintenanceStatus, setTenancyStage } from "./actions";
 
@@ -24,6 +27,15 @@ function since(d: Date) {
 
 export default async function PortalPage() {
   const session = await auth();
+  const role = session?.user?.role;
+  const email = session?.user?.email ?? "";
+  const name = session?.user?.name;
+
+  // Role-specific portals.
+  if (role === "TENANT") return <TenantDashboard email={email} name={name} />;
+  if (role === "AGENT") return <AgentDashboard email={email} name={name} />;
+
+  const isAdmin = role === "ADMIN";
 
   const [tenancyApps, bookings, contacts, maintenance, adverts, counts] = await Promise.all([
     prisma.booking.findMany({
@@ -50,13 +62,20 @@ export default async function PortalPage() {
     <Container className="py-10 sm:py-14">
       <div className="flex flex-wrap items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-ink">Admin Portal</h1>
+          <h1 className="text-2xl font-bold text-ink">{isAdmin ? "Admin Portal" : "Staff Portal"}</h1>
           <p className="text-sm text-ink-muted">
             Signed in as {session?.user?.email}
-            {session?.user?.role ? ` · ${session.user.role}` : ""}
+            {role ? ` · ${role}` : ""}
           </p>
         </div>
-        <SignOutButton />
+        <div className="flex items-center gap-2">
+          {isAdmin && (
+            <ButtonLink href="/portal/users" size="sm" variant="outline">
+              Manage Users
+            </ButtonLink>
+          )}
+          <SignOutButton />
+        </div>
       </div>
 
       <div className="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
