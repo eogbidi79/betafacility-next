@@ -62,9 +62,10 @@ async function main() {
   const adminEmail = (process.env.SEED_ADMIN_EMAIL || "admin@betafacility.com").toLowerCase();
   const adminPassword = process.env.SEED_ADMIN_PASSWORD || "ChangeMe!2026";
   const passwordHash = await bcrypt.hash(adminPassword, 10);
+  // Keep the admin password in sync with SEED_ADMIN_PASSWORD on every seed run.
   await prisma.user.upsert({
     where: { email: adminEmail },
-    update: {},
+    update: { passwordHash, role: "ADMIN" },
     create: { email: adminEmail, name: "Administrator", role: "ADMIN", passwordHash },
   });
   console.log(`Seeded admin user: ${adminEmail}`);

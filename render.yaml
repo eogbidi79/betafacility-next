@@ -23,6 +23,8 @@ services:
       # --- Auth ---
       - key: AUTH_SECRET
         generateValue: true
+      - key: AUTH_URL # canonical public URL, e.g. https://www.betafacility.com
+        sync: false
       - key: NEXT_PUBLIC_SITE_URL
         sync: false
       - key: SEED_ADMIN_EMAIL
