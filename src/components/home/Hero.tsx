@@ -9,9 +9,9 @@ const primaryCtas = [
 ];
 
 const secondaryCtas = [
-  { label: "Advertise Your Property", href: "/advertise" },
-  { label: "Report an Issue", href: "/facility-management" },
-  { label: "Book Maintenance", href: "/facility-management" },
+  { label: "List Your Property — Free", href: "/advertise" },
+  { label: "Report a Fault Fast", href: "/facility-management" },
+  { label: "Book Maintenance Today", href: "/facility-management" },
 ];
 
 export function Hero() {
@@ -60,8 +60,8 @@ export function Hero() {
                 key={cta.label}
                 href={cta.href}
                 size="sm"
-                variant="outline"
-                className="border-white/30 bg-transparent text-white hover:border-white hover:bg-white/10"
+                variant="white"
+                className="font-semibold shadow-sm"
               >
                 {cta.label}
               </ButtonLink>
