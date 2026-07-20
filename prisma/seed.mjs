@@ -59,16 +59,31 @@ async function main() {
   }
   console.log(`Seeded ${rentals.length} rentals.`);
 
-  const adminEmail = (process.env.SEED_ADMIN_EMAIL || "admin@betafacility.com").toLowerCase();
-  const adminPassword = process.env.SEED_ADMIN_PASSWORD || "ChangeMe!2026";
-  const passwordHash = await bcrypt.hash(adminPassword, 10);
-  // Keep the admin password in sync with SEED_ADMIN_PASSWORD on every seed run.
-  await prisma.user.upsert({
-    where: { email: adminEmail },
-    update: { passwordHash, role: "ADMIN" },
-    create: { email: adminEmail, name: "Administrator", role: "ADMIN", passwordHash },
-  });
-  console.log(`Seeded admin user: ${adminEmail}`);
+  // Admin accounts. Passwords are re-synced from env on every seed run.
+  const admins = [
+    {
+      email: (process.env.SEED_ADMIN_EMAIL || "admin@betafacility.com").toLowerCase(),
+      name: "Administrator",
+      password: process.env.SEED_ADMIN_PASSWORD || "ChangeMe!2026",
+    },
+    {
+      email: (process.env.SEED_ADMIN2_EMAIL || "emmanuel.ogbidi@betafacility.com").toLowerCase(),
+      name: "Emmanuel Ogbidi",
+      // Falls back to the primary admin password if no dedicated one is set.
+      password: process.env.SEED_ADMIN2_PASSWORD || process.env.SEED_ADMIN_PASSWORD || "ChangeMe!2026",
+    },
+  ];
+
+  for (const a of admins) {
+    if (!a.email || !a.password) continue;
+    const passwordHash = await bcrypt.hash(a.password, 10);
+    await prisma.user.upsert({
+      where: { email: a.email },
+      update: { passwordHash, role: "ADMIN" },
+      create: { email: a.email, name: a.name, role: "ADMIN", passwordHash },
+    });
+    console.log(`Seeded admin user: ${a.email}`);
+  }
 }
 
 main()
