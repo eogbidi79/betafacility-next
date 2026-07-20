@@ -69,6 +69,9 @@ export default async function PortalPage() {
           </p>
         </div>
         <div className="flex items-center gap-2">
+          <ButtonLink href="/portal/report" size="sm" variant="outline">
+            Status Report
+          </ButtonLink>
           {isAdmin && (
             <ButtonLink href="/portal/users" size="sm" variant="outline">
               Manage Users
@@ -76,6 +79,11 @@ export default async function PortalPage() {
           )}
           <SignOutButton />
         </div>
+        {!isAdmin && (
+          <p className="w-full rounded-lg border border-blue-200 bg-blue-50 px-3 py-2 text-xs text-blue-700">
+            Read-only access — you can view records and generate reports. Contact an admin to make changes.
+          </p>
+        )}
       </div>
 
       <div className="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
@@ -113,7 +121,7 @@ export default async function PortalPage() {
                           ? "PAID"
                           : t.stage ?? "APPLIED"}
                     </Badge>
-                    {!decided && (
+                    {isAdmin && !decided && (
                       <div className="flex gap-1">
                         {t.stage !== "UNDER_REVIEW" && (
                           <StageBtn id={t.id} stage="UNDER_REVIEW" label="Start review" className="bg-ink text-white hover:bg-ink-soft" />
@@ -185,26 +193,32 @@ export default async function PortalPage() {
                     </p>
                     <p className="text-xs text-ink-muted tabular">{m.reference} · {m.unit} · {since(m.createdAt)}</p>
                   </div>
-                  <form action={setMaintenanceStatus} className="flex items-center gap-1.5">
-                    <input type="hidden" name="id" value={m.id} />
-                    <select
-                      name="status"
-                      defaultValue={m.status}
-                      className="rounded-md border border-gray-300 bg-white px-2 py-1 text-xs text-ink"
-                    >
-                      {MAINT_STATUSES.map((s) => (
-                        <option key={s} value={s}>
-                          {s.replace("_", " ")}
-                        </option>
-                      ))}
-                    </select>
-                    <button
-                      type="submit"
-                      className="rounded-md bg-ink px-2.5 py-1 text-xs font-semibold text-white hover:bg-ink-soft"
-                    >
-                      Save
-                    </button>
-                  </form>
+                  {isAdmin ? (
+                    <form action={setMaintenanceStatus} className="flex items-center gap-1.5">
+                      <input type="hidden" name="id" value={m.id} />
+                      <select
+                        name="status"
+                        defaultValue={m.status}
+                        className="rounded-md border border-gray-300 bg-white px-2 py-1 text-xs text-ink"
+                      >
+                        {MAINT_STATUSES.map((s) => (
+                          <option key={s} value={s}>
+                            {s.replace("_", " ")}
+                          </option>
+                        ))}
+                      </select>
+                      <button
+                        type="submit"
+                        className="rounded-md bg-ink px-2.5 py-1 text-xs font-semibold text-white hover:bg-ink-soft"
+                      >
+                        Save
+                      </button>
+                    </form>
+                  ) : (
+                    <Badge tone={m.status === "RESOLVED" || m.status === "CLOSED" ? "success" : "info"}>
+                      {m.status.replace("_", " ")}
+                    </Badge>
+                  )}
                 </li>
               ))}
             </ul>
@@ -225,30 +239,32 @@ export default async function PortalPage() {
                     <Badge tone={a.status === "APPROVED" ? "success" : a.status === "REJECTED" ? "neutral" : "brand"}>
                       {a.status}
                     </Badge>
-                    <div className="flex gap-1">
-                      <form action={setListingStatus}>
-                        <input type="hidden" name="id" value={a.id} />
-                        <input type="hidden" name="status" value="APPROVED" />
-                        <button
-                          type="submit"
-                          disabled={a.status === "APPROVED"}
-                          className="rounded-md bg-green-600 px-2 py-1 text-xs font-semibold text-white hover:bg-green-700 disabled:opacity-40"
-                        >
-                          Approve
-                        </button>
-                      </form>
-                      <form action={setListingStatus}>
-                        <input type="hidden" name="id" value={a.id} />
-                        <input type="hidden" name="status" value="REJECTED" />
-                        <button
-                          type="submit"
-                          disabled={a.status === "REJECTED"}
-                          className="rounded-md border border-gray-300 px-2 py-1 text-xs font-semibold text-ink-soft hover:border-ink disabled:opacity-40"
-                        >
-                          Reject
-                        </button>
-                      </form>
-                    </div>
+                    {isAdmin && (
+                      <div className="flex gap-1">
+                        <form action={setListingStatus}>
+                          <input type="hidden" name="id" value={a.id} />
+                          <input type="hidden" name="status" value="APPROVED" />
+                          <button
+                            type="submit"
+                            disabled={a.status === "APPROVED"}
+                            className="rounded-md bg-green-600 px-2 py-1 text-xs font-semibold text-white hover:bg-green-700 disabled:opacity-40"
+                          >
+                            Approve
+                          </button>
+                        </form>
+                        <form action={setListingStatus}>
+                          <input type="hidden" name="id" value={a.id} />
+                          <input type="hidden" name="status" value="REJECTED" />
+                          <button
+                            type="submit"
+                            disabled={a.status === "REJECTED"}
+                            className="rounded-md border border-gray-300 px-2 py-1 text-xs font-semibold text-ink-soft hover:border-ink disabled:opacity-40"
+                          >
+                            Reject
+                          </button>
+                        </form>
+                      </div>
+                    )}
                   </div>
                 </li>
               ))}

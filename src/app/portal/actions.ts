@@ -12,8 +12,8 @@ import {
 
 async function requireAuth() {
   const session = await auth();
-  const role = session?.user?.role;
-  if (role !== "ADMIN" && role !== "STAFF") throw new Error("Forbidden");
+  // Only admins can change records; staff are read-only.
+  if (session?.user?.role !== "ADMIN") throw new Error("Forbidden");
 }
 
 const TENANCY_STAGES = ["UNDER_REVIEW", "ACCEPTED", "REJECTED"] as const;

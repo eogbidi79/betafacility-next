@@ -14,6 +14,10 @@ export const authConfig = {
       if (path.startsWith("/portal/users")) {
         return auth?.user?.role === "ADMIN";
       }
+      // Reports are for admin + staff.
+      if (path.startsWith("/portal/report")) {
+        return auth?.user?.role === "ADMIN" || auth?.user?.role === "STAFF";
+      }
       if (path.startsWith("/portal")) return Boolean(auth?.user);
       return true;
     },
