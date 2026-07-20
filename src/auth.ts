@@ -4,6 +4,13 @@ import bcrypt from "bcryptjs";
 import { prisma } from "@/lib/db";
 import { authConfig } from "@/auth.config";
 
+// Behind a proxy (Render), Auth.js can misdetect the host (e.g. localhost:10000).
+// Pin it to the public URL so sign-in URLs/cookies are correct, without needing
+// a separate AUTH_URL env var.
+if (!process.env.AUTH_URL && process.env.NEXT_PUBLIC_SITE_URL) {
+  process.env.AUTH_URL = process.env.NEXT_PUBLIC_SITE_URL;
+}
+
 export const { handlers, auth, signIn, signOut } = NextAuth({
   ...authConfig,
   providers: [
