@@ -16,9 +16,9 @@ const secondaryCtas = [
 
 const pill =
   "inline-flex items-center justify-center rounded-full font-semibold transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/70 focus-visible:ring-offset-2 focus-visible:ring-offset-black/40";
-const solidPill = `${pill} bg-white px-6 py-3 text-sm text-brand-700 shadow-lg shadow-black/20 hover:bg-white/90`;
-const glassPill = `${pill} border border-white/40 bg-white/15 px-6 py-3 text-sm text-white backdrop-blur-md hover:bg-white/25`;
-const glassPillSm = `${pill} border border-white/35 bg-white/10 px-4 py-2 text-xs text-white backdrop-blur-md hover:bg-white/20`;
+const orangePill = `${pill} bg-brand-500 px-6 py-3 text-sm text-white shadow-lg shadow-black/20 hover:bg-brand-600`;
+const whitePill = `${pill} bg-white px-6 py-3 text-sm text-brand-700 shadow-lg shadow-black/20 hover:bg-brand-50`;
+const whitePillSm = `${pill} bg-white px-4 py-2 text-xs text-brand-700 shadow-md shadow-black/10 hover:bg-brand-50`;
 
 export function Hero() {
   return (
@@ -52,19 +52,19 @@ export function Hero() {
             </p>
 
             <div className="mt-9 flex flex-wrap gap-3">
-              {primaryCtas.map((cta, i) => (
-                <Link key={cta.label} href={cta.href} className={i === 0 ? solidPill : glassPill}>
+              {primaryCtas.map((cta) => (
+                <Link key={cta.label} href={cta.href} className={orangePill}>
                   {cta.label}
                 </Link>
               ))}
-              <Link href="/login" className={glassPill}>
+              <Link href="/login" className={whitePill}>
                 Login to Portal
               </Link>
             </div>
 
             <div className="mt-4 flex flex-wrap gap-2.5">
               {secondaryCtas.map((cta) => (
-                <Link key={cta.label} href={cta.href} className={glassPillSm}>
+                <Link key={cta.label} href={cta.href} className={whitePillSm}>
                   {cta.label}
                 </Link>
               ))}
