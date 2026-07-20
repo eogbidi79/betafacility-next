@@ -13,8 +13,10 @@ const variants: Record<Variant, string> = {
   outline: "border border-gray-300 bg-white text-ink hover:border-ink",
   ghost: "text-ink-muted hover:text-ink hover:bg-gray-100",
   white: "bg-white text-brand-600 hover:bg-brand-50",
-  // Transparent with an orange outline + orange text (for dark backgrounds).
-  brandLine: "border border-brand-400/60 bg-transparent text-brand-400 hover:bg-brand-500/10 hover:border-brand-400",
+  // Premium frosted-glass button for dark backgrounds: translucent + blur,
+  // bright orange text, soft border and shadow.
+  brandLine:
+    "border border-white/25 bg-white/10 text-brand-300 font-semibold backdrop-blur-md shadow-lg shadow-black/20 hover:bg-white/20 hover:border-brand-300 hover:text-brand-200",
 };
 
 const sizes: Record<Size, string> = {
