@@ -1,5 +1,5 @@
 import Image from "next/image";
-import Link from "next/link";
+import { ButtonLink } from "@/components/ui/Button";
 import { Container } from "@/components/ui/Container";
 import { site } from "@/data/site";
 
@@ -14,66 +14,55 @@ const secondaryCtas = [
   { label: "Book Maintenance", href: "/facility-management" },
 ];
 
-const pill =
-  "inline-flex items-center justify-center rounded-full font-semibold transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/70 focus-visible:ring-offset-2 focus-visible:ring-offset-brand-500";
-const solidPill = `${pill} bg-white px-6 py-3 text-sm text-brand-700 shadow-lg shadow-black/15 hover:bg-white/90`;
-const glassPill = `${pill} border border-white/40 bg-white/15 px-6 py-3 text-sm text-white backdrop-blur-md hover:bg-white/25`;
-const glassPillSm = `${pill} border border-white/35 bg-white/10 px-4 py-2 text-xs text-white backdrop-blur-md hover:bg-white/20`;
-
 export function Hero() {
   return (
-    <section className="px-3 pt-3 sm:px-5 sm:pt-5">
-      <div className="relative mx-auto max-w-[1440px] overflow-hidden rounded-[1.75rem] bg-gradient-to-br from-[#3a2a63] via-brand-500 to-amber-300 sm:rounded-[2.25rem]">
-        {/* Blended property imagery for depth */}
-        <div className="absolute inset-0">
-          <Image
-            src="/images/hero.jpg"
-            alt=""
-            fill
-            priority
-            sizes="100vw"
-            className="object-cover opacity-30 mix-blend-overlay"
-          />
-          <div className="absolute inset-0 bg-gradient-to-r from-black/45 via-black/10 to-transparent" />
-          {/* soft glow, top-right */}
-          <div className="absolute -right-24 -top-24 h-96 w-96 rounded-full bg-amber-200/30 blur-3xl" />
-        </div>
-
-        <Container className="relative py-20 sm:py-28 lg:py-36">
-          <div className="max-w-2xl animate-fade-up">
-            <span className="mb-5 inline-flex rounded-full bg-white/15 px-4 py-1.5 text-sm font-medium text-white ring-1 ring-white/20 backdrop-blur">
-              Ogombo, Ajah · Lagos, Nigeria
-            </span>
-            <h1 className="text-4xl font-extrabold leading-[1.05] tracking-tight text-white sm:text-5xl lg:text-6xl">
-              {site.legalName}
-            </h1>
-            <p className="mt-5 max-w-xl text-lg leading-relaxed text-white/90">
-              Professional Property Management &amp; Facility Services tailored to protect your
-              investment and maximize its value. Search, book, pay online, e-sign and get an instant
-              receipt.
-            </p>
-
-            <div className="mt-9 flex flex-wrap gap-3">
-              {primaryCtas.map((cta, i) => (
-                <Link key={cta.label} href={cta.href} className={i === 0 ? solidPill : glassPill}>
-                  {cta.label}
-                </Link>
-              ))}
-              <Link href="/login" className={glassPill}>
-                Login to Portal
-              </Link>
-            </div>
-
-            <div className="mt-4 flex flex-wrap gap-2.5">
-              {secondaryCtas.map((cta) => (
-                <Link key={cta.label} href={cta.href} className={glassPillSm}>
-                  {cta.label}
-                </Link>
-              ))}
-            </div>
-          </div>
-        </Container>
+    <section className="relative overflow-hidden bg-ink text-white">
+      <div className="absolute inset-0">
+        <Image
+          src="/images/hero.jpg"
+          alt=""
+          fill
+          priority
+          sizes="100vw"
+          className="object-cover opacity-25"
+        />
+        <div className="absolute inset-0 bg-gradient-to-br from-ink via-ink/90 to-brand-900/70" />
       </div>
+
+      <Container className="relative py-20 sm:py-28">
+        <div className="max-w-3xl animate-fade-up">
+          <p className="mb-4 inline-flex rounded-full bg-white/10 px-3 py-1 text-sm font-medium text-brand-200">
+            Ogombo, Ajah · Lagos, Nigeria
+          </p>
+          <h1 className="text-4xl font-extrabold tracking-tight sm:text-5xl lg:text-6xl">
+            {site.legalName}
+          </h1>
+          <p className="mt-5 max-w-2xl text-lg text-white/80">
+            Professional Property Management &amp; Facility Services tailored to protect your
+            investment and maximize its value. Search, book, pay online, e-sign and get an instant
+            receipt.
+          </p>
+
+          <div className="mt-8 flex flex-wrap gap-3">
+            {primaryCtas.map((cta) => (
+              <ButtonLink key={cta.label} href={cta.href} size="lg">
+                {cta.label}
+              </ButtonLink>
+            ))}
+            <ButtonLink href="/login" size="lg" variant="white">
+              Login to Portal
+            </ButtonLink>
+          </div>
+
+          <div className="mt-4 flex flex-wrap gap-3">
+            {secondaryCtas.map((cta) => (
+              <ButtonLink key={cta.label} href={cta.href} size="sm" variant="brandLine">
+                {cta.label}
+              </ButtonLink>
+            ))}
+          </div>
+        </div>
+      </Container>
     </section>
   );
 }
