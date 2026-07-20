@@ -10,7 +10,9 @@ export const runtime = "nodejs";
 export async function GET(req: Request) {
   const url = new URL(req.url);
   const reference = url.searchParams.get("reference") || url.searchParams.get("trxref");
-  const origin = url.origin;
+  // Behind Render's proxy req.url is the internal host (localhost:10000), so use
+  // the public site URL for redirects.
+  const origin = process.env.NEXT_PUBLIC_SITE_URL || url.origin;
 
   if (!reference) {
     return NextResponse.redirect(new URL("/rentals?payment=missing-ref", origin));
