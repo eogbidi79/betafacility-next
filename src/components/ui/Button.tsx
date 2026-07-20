@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { cn } from "@/lib/utils";
 
-type Variant = "primary" | "secondary" | "outline" | "ghost" | "white";
+type Variant = "primary" | "secondary" | "outline" | "ghost" | "white" | "brandLine";
 type Size = "sm" | "md" | "lg";
 
 const base =
@@ -13,6 +13,8 @@ const variants: Record<Variant, string> = {
   outline: "border border-gray-300 bg-white text-ink hover:border-ink",
   ghost: "text-ink-muted hover:text-ink hover:bg-gray-100",
   white: "bg-white text-brand-600 hover:bg-brand-50",
+  // Transparent with an orange outline + orange text (for dark backgrounds).
+  brandLine: "border border-brand-400/60 bg-transparent text-brand-400 hover:bg-brand-500/10 hover:border-brand-400",
 };
 
 const sizes: Record<Size, string> = {

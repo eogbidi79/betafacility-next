@@ -56,13 +56,7 @@ export function Hero() {
 
           <div className="mt-4 flex flex-wrap gap-3">
             {secondaryCtas.map((cta) => (
-              <ButtonLink
-                key={cta.label}
-                href={cta.href}
-                size="sm"
-                variant="white"
-                className="font-semibold shadow-sm"
-              >
+              <ButtonLink key={cta.label} href={cta.href} size="sm" variant="brandLine">
                 {cta.label}
               </ButtonLink>
             ))}
