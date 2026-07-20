@@ -48,6 +48,13 @@ export function AdvertiseForm() {
             <option>Owner</option>
           </Select>
         </Field>
+        <Field label="Listing purpose" htmlFor="transactionType" required>
+          <Select id="transactionType" name="transactionType" defaultValue="RENT">
+            <option value="RENT">For Rent</option>
+            <option value="SELL">For Sale</option>
+            <option value="BUY">Wanted to Buy</option>
+          </Select>
+        </Field>
         <Field label="Property Class" htmlFor="propertyClass" required>
           <Select id="propertyClass" name="propertyClass" defaultValue="Residential">
             <option>Residential</option>
@@ -88,6 +95,10 @@ export function AdvertiseForm() {
 
       <Field label="Description" htmlFor="description" required>
         <Textarea id="description" name="description" required placeholder="Describe the property…" />
+      </Field>
+
+      <Field label="Image URL (shown on your listing)" htmlFor="imageUrl">
+        <Input id="imageUrl" name="imageUrl" type="url" placeholder="https://…/photo.jpg" />
       </Field>
 
       <Field label="Property Images (up to 6)" htmlFor="images">

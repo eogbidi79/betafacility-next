@@ -4,10 +4,21 @@ import { WhyChooseUs } from "@/components/home/WhyChooseUs";
 import { CTABand } from "@/components/home/CTABand";
 import { Section, SectionHeading } from "@/components/ui/Section";
 import { RentalCard } from "@/components/property/RentalCard";
+import { ListingCard } from "@/components/property/ListingCard";
 import { ButtonLink } from "@/components/ui/Button";
 import { rentals } from "@/data/rentals";
+import { prisma } from "@/lib/db";
 
-export default function HomePage() {
+// Rendered per request so newly approved listings appear immediately.
+export const dynamic = "force-dynamic";
+
+export default async function HomePage() {
+  const listings = await prisma.advertiseSubmission.findMany({
+    where: { status: "APPROVED" },
+    orderBy: { createdAt: "desc" },
+    take: 6,
+  });
+
   return (
     <>
       <Hero />
@@ -44,6 +55,26 @@ export default function HomePage() {
           ))}
         </div>
       </Section>
+
+      {listings.length > 0 && (
+        <Section>
+          <div className="flex flex-wrap items-end justify-between gap-4">
+            <SectionHeading
+              eyebrow="Marketplace"
+              title="Latest property listings"
+              subtitle="Newly advertised properties for rent and sale, and buy requests."
+            />
+            <ButtonLink href="/listings" variant="outline">
+              View all listings
+            </ButtonLink>
+          </div>
+          <div className="mt-10 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+            {listings.map((l) => (
+              <ListingCard key={l.id} listing={l} />
+            ))}
+          </div>
+        </Section>
+      )}
 
       <CTABand />
     </>

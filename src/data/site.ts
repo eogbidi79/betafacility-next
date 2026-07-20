@@ -40,6 +40,7 @@ export const site = {
 export const mainNav = [
   { label: "Home", href: "/" },
   { label: "Rentals", href: "/rentals" },
+  { label: "Listings", href: "/listings" },
   { label: "Facility", href: "/facility-management" },
   { label: "Advertise", href: "/advertise" },
   { label: "Portfolio", href: "/properties" },

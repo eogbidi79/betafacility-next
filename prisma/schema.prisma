@@ -153,22 +153,25 @@ enum ListingStatus {
 }
 
 model AdvertiseSubmission {
-  id            String        @id @default(cuid())
-  reference     String        @unique
-  name          String
-  email         String
-  phone         String
-  role          String
-  propertyClass String
-  listingType   String
-  title         String
-  category      String
-  location      String
-  price         Int
-  description   String
-  imageCount    Int           @default(0)
-  status        ListingStatus @default(PENDING)
-  createdAt     DateTime      @default(now())
+  id              String        @id @default(cuid())
+  reference       String        @unique
+  name            String
+  email           String
+  phone           String
+  role            String
+  propertyClass   String
+  listingType     String
+  transactionType String        @default("RENT") // RENT | SELL | BUY
+  title           String
+  category        String
+  location        String
+  price           Int
+  description     String
+  imageUrl        String?
+  imageCount      Int           @default(0)
+  // Displayed publicly only after an admin APPROVES it.
+  status          ListingStatus @default(PENDING)
+  createdAt       DateTime      @default(now())
 }
 
 model Voucher {

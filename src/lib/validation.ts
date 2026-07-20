@@ -35,6 +35,7 @@ export const advertiseSchema = z.object({
   email,
   phone,
   role: z.string().trim().min(1),
+  transactionType: z.enum(["RENT", "SELL", "BUY"]).default("RENT"),
   propertyClass: z.string().trim().min(1),
   listingType: z.string().trim().min(1),
   title: z.string().trim().min(3, "Add a property title").max(200),
@@ -42,6 +43,7 @@ export const advertiseSchema = z.object({
   location: z.string().trim().min(2, "Add a location"),
   price: z.coerce.number().int().min(0, "Enter a valid price"),
   description: message,
+  imageUrl: z.string().trim().url("Enter a valid image URL").optional().or(z.literal("")),
   imageCount: z.coerce.number().int().min(0).max(6).default(0),
 });
 export type AdvertiseInput = z.infer<typeof advertiseSchema>;
