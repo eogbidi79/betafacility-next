@@ -30,7 +30,7 @@ export async function POST(req: Request) {
       },
     });
     await sendEmail({
-      to: [notifyTo.maintenance, notifyTo.admin],
+      to: [notifyTo.maintenance],
       replyTo: d.email,
       subject: `New ${d.kind === "booking" ? "maintenance booking" : "issue report"} — ${request.reference}`,
       html: emailLayout("Facility request", [

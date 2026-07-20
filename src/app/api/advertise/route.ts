@@ -31,7 +31,7 @@ export async function POST(req: Request) {
       },
     });
     await sendEmail({
-      to: [notifyTo.sales, notifyTo.admin],
+      to: [notifyTo.sales],
       replyTo: d.email,
       subject: `New property listing (pending) — ${submission.reference}`,
       html: emailLayout("New advertise submission", [

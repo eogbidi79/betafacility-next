@@ -68,7 +68,7 @@ export async function POST(
 
     await notifyBookingCancelled({ ...booking, refundOutcome }, voucherCode);
     await sendEmail({
-      to: [notifyTo.payments, notifyTo.admin],
+      to: [notifyTo.payments],
       subject: `Booking cancelled — ${reference} (${refundOutcome})`,
       html: emailLayout("Booking cancelled", [
         ["Reference", reference],
