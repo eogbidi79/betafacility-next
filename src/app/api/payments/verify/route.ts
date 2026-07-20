@@ -65,7 +65,7 @@ export async function GET(req: Request) {
       ["Amount", formatNaira(booking.amount)],
       ["Term", booking.term],
     ],
-    [notifyTo.payments, notifyTo.admin],
+    [notifyTo.payments],
   );
 
   return NextResponse.redirect(new URL(nextStep(booking), origin));

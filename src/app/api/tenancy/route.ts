@@ -63,7 +63,7 @@ export async function POST(req: Request) {
         ["Guarantor", `${d.guarantorName} · ${d.guarantorPhone}`],
         ["Annual rent", formatNaira(property.pricePerYear)],
       ],
-      [notifyTo.sales, notifyTo.admin],
+      [notifyTo.payments],
     );
 
     return ok(
