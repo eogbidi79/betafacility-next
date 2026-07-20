@@ -50,7 +50,7 @@ src/
 
 ## Backend
 
-A real backend is wired up (Prisma + SQLite in dev; swap `DATABASE_URL` for Postgres in prod).
+A real backend is wired up (Prisma + **PostgreSQL**; use a free [Neon](https://neon.tech) database).
 
 - **Database & ORM** — Prisma models: `User`, `Rental`, `Booking`, `MaintenanceRequest`,
   `AdvertiseSubmission`, `ContactMessage`.
@@ -68,9 +68,9 @@ A real backend is wired up (Prisma + SQLite in dev; swap `DATABASE_URL` for Post
 ### First-time setup
 
 ```bash
-cp .env.example .env      # then fill in secrets (see below)
+cp .env.example .env      # add your Neon DATABASE_URL + DIRECT_URL and other keys
 npm install
-npm run db:migrate        # create the SQLite schema
+npm run db:migrate        # apply migrations to the database
 npm run db:seed           # seed rentals + admin user
 npm run dev
 ```
@@ -78,6 +78,29 @@ npm run dev
 Fill these in `.env` to go from dev-simulation to live:
 `AUTH_SECRET`, `PAYSTACK_SECRET_KEY`, `NEXT_PUBLIC_PAYSTACK_PUBLIC_KEY`, `RESEND_API_KEY`.
 Set the Paystack **webhook** to `https://<your-domain>/api/paystack/webhook`.
+
+## Deploy (Render + Neon — free)
+
+The app is a standard Node/Next server, so it also runs on any Node host (Railway,
+a Hostinger VPS, etc.) with the same commands. Steps for **Render's free tier**:
+
+1. **Database** — create a project at [neon.tech](https://neon.tech); copy the **pooled**
+   connection string (`DATABASE_URL`) and the **direct** one (`DIRECT_URL`).
+2. **Service** — at [render.com](https://render.com) → **New → Blueprint** and point it at this
+   repo (it reads [`render.yaml`](./render.yaml)), or **New → Web Service** with:
+   - Build: `npm install && npm run build`
+   - Start: `npm run start:migrate`  *(runs `prisma migrate deploy` then `next start`)*
+3. **Env vars** — set them in Render (see `.env.example`): `DATABASE_URL`, `DIRECT_URL`,
+   `AUTH_SECRET`, `NEXT_PUBLIC_SITE_URL=https://www.betafacility.com`, the Paystack/Resend keys,
+   the `NOTIFY_*` mailboxes, and `SEED_ADMIN_EMAIL` / `SEED_ADMIN_PASSWORD`.
+4. **First deploy** applies the migrations automatically. Then seed once from the Render
+   **Shell**: `npm run db:seed`.
+5. **Domain** — Render → Settings → Custom Domains → add `www.betafacility.com`; add the shown
+   A/CNAME records in Hostinger's DNS zone (leave MX/email records untouched).
+6. **Paystack webhook** → `https://www.betafacility.com/api/paystack/webhook`.
+
+> Free Render services sleep after ~15 min idle (first request wakes them in ~30–50s).
+> Upgrade the instance to stay always-on when you're ready.
 
 ## Data
 

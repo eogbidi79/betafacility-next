@@ -1,0 +1,51 @@
+# Render Blueprint — deploys the Next.js app as a free Web Service.
+# Create the service via Render → New → Blueprint (or New → Web Service and set
+# these commands). Fill the env var values in the Render dashboard.
+services:
+  - type: web
+    name: betafacility
+    runtime: node
+    plan: free
+    region: frankfurt
+    buildCommand: npm install && npm run build
+    # Applies any pending DB migrations to Neon, then starts Next.
+    startCommand: npm run start:migrate
+    healthCheckPath: /
+    autoDeploy: true
+    envVars:
+      - key: NODE_VERSION
+        value: "20"
+      # --- Database (Neon) ---
+      - key: DATABASE_URL # pooled connection string
+        sync: false
+      - key: DIRECT_URL # direct (non-pooled) connection string, for migrations
+        sync: false
+      # --- Auth ---
+      - key: AUTH_SECRET
+        generateValue: true
+      - key: NEXT_PUBLIC_SITE_URL
+        sync: false
+      - key: SEED_ADMIN_EMAIL
+        sync: false
+      - key: SEED_ADMIN_PASSWORD
+        sync: false
+      # --- Payments (Paystack) ---
+      - key: PAYSTACK_SECRET_KEY
+        sync: false
+      - key: NEXT_PUBLIC_PAYSTACK_PUBLIC_KEY
+        sync: false
+      # --- Email (Resend) ---
+      - key: RESEND_API_KEY
+        sync: false
+      - key: EMAIL_FROM
+        sync: false
+      - key: NOTIFY_CONTACT_TO
+        sync: false
+      - key: NOTIFY_SALES_TO
+        sync: false
+      - key: NOTIFY_MAINTENANCE_TO
+        sync: false
+      - key: NOTIFY_PAYMENTS_TO
+        sync: false
+      - key: NOTIFY_ADMIN_TO
+        sync: false

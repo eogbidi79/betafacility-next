@@ -5,8 +5,9 @@
   "description": "BetaFacility Managers Limited — property management & rentals (Next.js rebuild)",
   "scripts": {
     "dev": "next dev",
-    "build": "next build",
+    "build": "prisma generate && next build",
     "start": "next start",
+    "start:migrate": "prisma migrate deploy && next start",
     "lint": "next lint",
     "test": "vitest run",
     "test:watch": "vitest",
