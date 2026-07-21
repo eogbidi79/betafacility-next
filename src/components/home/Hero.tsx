@@ -9,9 +9,9 @@ const primaryCtas = [
 ];
 
 const secondaryCtas = [
-  { label: "List Your Property — Free", href: "/advertise" },
-  { label: "Report a Fault Fast", href: "/facility-management" },
-  { label: "Book Maintenance Today", href: "/facility-management" },
+  { label: "Advertise Your Property", href: "/advertise" },
+  { label: "Report an Issue", href: "/facility-management" },
+  { label: "Book Maintenance", href: "/facility-management" },
 ];
 
 export function Hero() {
