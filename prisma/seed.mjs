@@ -3,49 +3,48 @@ import bcrypt from "bcryptjs";
 
 const prisma = new PrismaClient();
 
-// Keep in sync with src/data/rentals.ts (source of truth for display).
+// Bookable short-stay units (slugs must match the AVAILABLE short-term entries in
+// src/data/rentals.ts so the booking flow can look them up).
+const AMEN = JSON.stringify(["Security", "Water Supply", "Compound Cleaning"]);
 const rentals = [
   {
-    slug: "2-bedroom-serviced-apartment",
-    title: "2-Bedroom Serviced Apartment",
-    location: "Ogombo, Ajah, Lagos",
-    description:
-      "Fully furnished 2-bedroom serviced apartment ideal for families and business travellers.",
-    beds: 2,
-    pricePerNight: 70000,
-    unitsTotal: 2,
-    image: "/images/prop-1.jpg",
-    amenities: JSON.stringify(["2 bed", "24/7 Power", "Water Supply"]),
+    slug: "short-studio-1",
+    title: "Studio Apartment",
+    location: "Ajah, Lagos",
+    description: "Comfortable studio apartment in Ajah with security, steady water and compound cleaning.",
+    beds: 0,
+    pricePerNight: 35000,
+    unitsTotal: 1,
+    image: "/images/rentals/ss-studio.jpg",
+    amenities: AMEN,
     type: "short-term",
-    bedroomClass: "2-bed",
+    bedroomClass: "studio",
   },
   {
-    slug: "1-bedroom-serviced-apartment",
-    title: "1-Bedroom Serviced Apartment",
-    location: "Ogombo, Ajah, Lagos",
-    description:
-      "Cozy, tastefully furnished 1-bedroom apartment perfect for couples and solo stays.",
+    slug: "short-1-bed-3",
+    title: "1 Bedroom Apartment",
+    location: "Ajah, Lagos",
+    description: "Comfortable 1 bedroom apartment in Ajah with security, steady water and compound cleaning.",
     beds: 1,
     pricePerNight: 55000,
-    unitsTotal: 2,
-    image: "/images/prop-2.jpg",
-    amenities: JSON.stringify(["1 bed", "24/7 Power", "Water Supply"]),
+    unitsTotal: 1,
+    image: "/images/rentals/ss-1br.jpg",
+    amenities: AMEN,
     type: "short-term",
     bedroomClass: "1-bed",
   },
   {
-    slug: "studio-apartment",
-    title: "Studio Apartment",
-    location: "Ogombo, Ajah, Lagos",
-    description:
-      "Smart open-plan studio with kitchenette — the affordable short-stay option in Ajah.",
-    beds: null,
-    pricePerNight: 35000,
+    slug: "short-1-bed-4",
+    title: "1 Bedroom Apartment",
+    location: "Ajah, Lagos",
+    description: "Comfortable 1 bedroom apartment in Ajah with security, steady water and compound cleaning.",
+    beds: 1,
+    pricePerNight: 55000,
     unitsTotal: 1,
-    image: "/images/prop-3.jpg",
-    amenities: JSON.stringify(["24/7 Power", "Water Supply"]),
+    image: "/images/rentals/ss-1br.jpg",
+    amenities: AMEN,
     type: "short-term",
-    bedroomClass: "studio",
+    bedroomClass: "1-bed",
   },
 ];
 

@@ -50,9 +50,12 @@ export default async function HomePage() {
           </ButtonLink>
         </div>
         <div className="mt-10 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
-          {rentals.map((rental) => (
-            <RentalCard key={rental.slug} rental={rental} />
-          ))}
+          {rentals
+            .filter((r) => r.available && r.type === "short-term")
+            .slice(0, 3)
+            .map((rental) => (
+              <RentalCard key={rental.slug} rental={rental} />
+            ))}
         </div>
       </Section>
 
