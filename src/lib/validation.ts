@@ -77,6 +77,17 @@ export const tenancySchema = z.object({
 });
 export type TenancyInput = z.infer<typeof tenancySchema>;
 
+export const serviceRequestSchema = z.object({
+  serviceId: z.string().trim().optional().or(z.literal("")),
+  name,
+  email,
+  phone,
+  location: z.string().trim().max(200).optional().or(z.literal("")),
+  preferredAt: z.string().trim().optional().or(z.literal("")),
+  message,
+});
+export type ServiceRequestInput = z.infer<typeof serviceRequestSchema>;
+
 export const cancelSchema = z.object({
   reason: z.string().trim().max(500).optional().or(z.literal("")),
 });

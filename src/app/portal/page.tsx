@@ -53,10 +53,11 @@ export default async function PortalPage() {
       prisma.maintenanceRequest.count(),
       prisma.advertiseSubmission.count(),
       prisma.organization.count(),
+      prisma.serviceRequest.count(),
     ]),
   ]);
 
-  const [bookingCount, contactCount, maintCount, advertCount, orgCount] = counts;
+  const [bookingCount, contactCount, maintCount, advertCount, orgCount, serviceReqCount] = counts;
   const revenue = bookings.reduce((s, b) => (b.status !== "PENDING" ? s + b.amount : s), 0);
 
   return (
@@ -84,6 +85,11 @@ export default async function PortalPage() {
             </ButtonLink>
           )}
           {isAdmin && (
+            <ButtonLink href="/portal/services" size="sm" variant="outline">
+              Services
+            </ButtonLink>
+          )}
+          {isAdmin && (
             <ButtonLink href="/portal/users" size="sm" variant="outline">
               Manage Users
             </ButtonLink>
@@ -97,12 +103,13 @@ export default async function PortalPage() {
         )}
       </div>
 
-      <div className="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-5">
+      <div className="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
         <Stat label="Bookings" value={String(bookingCount)} />
         <Stat label="Contact messages" value={String(contactCount)} />
         <Stat label="Maintenance requests" value={String(maintCount)} />
         <Stat label="Listing submissions" value={String(advertCount)} />
         <Stat label="Organizations" value={String(orgCount)} />
+        <Stat label="Service requests" value={String(serviceReqCount)} />
       </div>
 
       <Panel title="Tenancy applications (1-year)">

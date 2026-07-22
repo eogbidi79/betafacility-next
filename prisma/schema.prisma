@@ -231,7 +231,47 @@ model Organization {
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
+  services Service[]
+
   @@index([kind, verified, active])
+}
+
+/// A service offered by a vendor organisation (Phase 4 marketplace).
+model Service {
+  id             String   @id @default(cuid())
+  organizationId String
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  category       String // Electrical | Plumbing | Cleaning | Security & CCTV | ...
+  title          String
+  description    String?
+  country        String   @default("Nigeria")
+  state          String?
+  city           String?
+  priceFrom      Int?
+  currencyCode   String   @default("NGN")
+  active         Boolean  @default(true)
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  @@index([category, active])
+  @@index([organizationId])
+}
+
+/// A customer request against a service / vendor.
+model ServiceRequest {
+  id          String        @id @default(cuid())
+  reference   String        @unique
+  serviceId   String?
+  vendorOrgId String?
+  category    String?
+  name        String
+  email       String
+  phone       String
+  location    String?
+  preferredAt DateTime?
+  message     String?
+  status      RequestStatus @default(NEW)
+  createdAt   DateTime      @default(now())
 }
 
 model Voucher {
