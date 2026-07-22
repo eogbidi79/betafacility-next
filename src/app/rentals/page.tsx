@@ -1,57 +1,35 @@
 import { PageHeader } from "@/components/ui/PageHeader";
 import { Container } from "@/components/ui/Container";
-import { RentalsExplorer } from "@/components/property/RentalsExplorer";
-import { ListingCard } from "@/components/property/ListingCard";
-import { SectionHeading } from "@/components/ui/Section";
-import { ButtonLink } from "@/components/ui/Button";
+import { RentalsBrowser } from "@/components/property/RentalsBrowser";
 import { prisma } from "@/lib/db";
+import { toDTO } from "@/lib/listings";
 import { pageMetadata } from "@/lib/seo";
 
 export const dynamic = "force-dynamic";
 
 export const metadata = pageMetadata({
-  title: "Rentals — Shortlet & Long-Term Homes in Ogombo, Ajah",
+  title: "Short-let & Long-Term Rentals",
   description:
-    "Search short-let and long-term serviced apartments in Ogombo, Ajah. Book online, pay securely, e-sign and get an instant receipt.",
+    "Browse short-let and long-term rentals across Nigeria with BetaFacility Managers — filter by state, city, rental type, bedrooms and availability.",
   path: "/rentals",
 });
 
 export default async function RentalsPage() {
-  const rentalListings = await prisma.advertiseSubmission.findMany({
-    where: { status: "APPROVED", transactionType: "RENT" },
-    orderBy: { createdAt: "desc" },
-    take: 6,
+  const rows = await prisma.rentalListing.findMany({
+    where: { active: true },
+    orderBy: [{ rentalCategory: "asc" }, { createdAt: "asc" }],
   });
+  const listings = rows.map(toDTO);
 
   return (
     <>
       <PageHeader
         eyebrow="Beta Facility Rental"
-        title="Short-let & long-term homes in Ogombo, Ajah"
-        subtitle="Search, book, pay online, e-sign and get an instant receipt."
+        title="Short-let & Long-Term Rentals"
+        subtitle="Browse rentals across Nigeria — filter by state, city, rental type, bedrooms and availability, and find them on the map."
       />
       <Container className="py-12 sm:py-16">
-        <RentalsExplorer />
-
-        {rentalListings.length > 0 && (
-          <div className="mt-16">
-            <div className="flex flex-wrap items-end justify-between gap-4">
-              <SectionHeading
-                eyebrow="Advertised by agents & landlords"
-                title="More rentals available"
-                subtitle="Properties advertised for rent through BetaFacility Managers."
-              />
-              <ButtonLink href="/listings?type=RENT" variant="outline">
-                View all rental listings
-              </ButtonLink>
-            </div>
-            <div className="mt-10 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
-              {rentalListings.map((l) => (
-                <ListingCard key={l.id} listing={l} />
-              ))}
-            </div>
-          </div>
-        )}
+        <RentalsBrowser listings={listings} />
       </Container>
     </>
   );

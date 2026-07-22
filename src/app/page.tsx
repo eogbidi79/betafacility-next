@@ -3,21 +3,25 @@ import { RentCalculator } from "@/components/home/RentCalculator";
 import { WhyChooseUs } from "@/components/home/WhyChooseUs";
 import { CTABand } from "@/components/home/CTABand";
 import { Section, SectionHeading } from "@/components/ui/Section";
-import { RentalCard } from "@/components/property/RentalCard";
+import { RentalListingCard } from "@/components/property/RentalListingCard";
 import { ListingCard } from "@/components/property/ListingCard";
 import { ButtonLink } from "@/components/ui/Button";
-import { rentals } from "@/data/rentals";
 import { prisma } from "@/lib/db";
+import { toDTO } from "@/lib/listings";
 
 // Rendered per request so newly approved listings appear immediately.
 export const dynamic = "force-dynamic";
 
 export default async function HomePage() {
-  const listings = await prisma.advertiseSubmission.findMany({
-    where: { status: "APPROVED" },
-    orderBy: { createdAt: "desc" },
-    take: 6,
-  });
+  const [rentalRows, listings] = await Promise.all([
+    prisma.rentalListing.findMany({ where: { active: true }, orderBy: { createdAt: "asc" }, take: 3 }),
+    prisma.advertiseSubmission.findMany({
+      where: { status: "APPROVED" },
+      orderBy: { createdAt: "desc" },
+      take: 6,
+    }),
+  ]);
+  const featuredRentals = rentalRows.map(toDTO);
 
   return (
     <>
@@ -38,26 +42,25 @@ export default async function HomePage() {
         <WhyChooseUs />
       </Section>
 
-      <Section className="bg-gray-50">
-        <div className="flex flex-wrap items-end justify-between gap-4">
-          <SectionHeading
-            eyebrow="Short-let"
-            title="Available serviced apartments"
-            subtitle="Book a fully furnished home in Ogombo, Ajah — pay online, e-sign and get an instant receipt."
-          />
-          <ButtonLink href="/rentals" variant="outline">
-            View all rentals
-          </ButtonLink>
-        </div>
-        <div className="mt-10 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
-          {rentals
-            .filter((r) => r.available && r.type === "short-term")
-            .slice(0, 3)
-            .map((rental) => (
-              <RentalCard key={rental.slug} rental={rental} />
+      {featuredRentals.length > 0 && (
+        <Section className="bg-gray-50">
+          <div className="flex flex-wrap items-end justify-between gap-4">
+            <SectionHeading
+              eyebrow="Rentals"
+              title="Short-let & long-term rentals"
+              subtitle="Serviced apartments and long-term homes in Ajah, Lagos — and across Nigeria."
+            />
+            <ButtonLink href="/rentals" variant="outline">
+              View all rentals
+            </ButtonLink>
+          </div>
+          <div className="mt-10 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+            {featuredRentals.map((l) => (
+              <RentalListingCard key={l.id} listing={l} />
             ))}
-        </div>
-      </Section>
+          </div>
+        </Section>
+      )}
 
       {listings.length > 0 && (
         <Section>

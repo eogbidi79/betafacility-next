@@ -10,8 +10,8 @@ export const authConfig = {
   callbacks: {
     authorized({ auth, request }) {
       const path = request.nextUrl.pathname;
-      // User management is admin-only.
-      if (path.startsWith("/portal/users")) {
+      // User management and rental management are admin-only.
+      if (path.startsWith("/portal/users") || path.startsWith("/portal/rentals")) {
         return auth?.user?.role === "ADMIN";
       }
       // Reports are for admin + staff.

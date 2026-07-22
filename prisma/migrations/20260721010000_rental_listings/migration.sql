@@ -1,0 +1,26 @@
+-- CreateTable: grouped rental listings (Beta Facility + third-party)
+CREATE TABLE IF NOT EXISTS "RentalListing" (
+    "id" TEXT NOT NULL,
+    "title" TEXT NOT NULL,
+    "rentalCategory" TEXT NOT NULL,
+    "bedroomType" TEXT NOT NULL,
+    "totalUnits" INTEGER NOT NULL DEFAULT 1,
+    "availableUnits" INTEGER NOT NULL DEFAULT 0,
+    "state" TEXT NOT NULL DEFAULT 'Lagos',
+    "city" TEXT NOT NULL DEFAULT 'Ajah',
+    "area" TEXT,
+    "address" TEXT,
+    "price" INTEGER,
+    "rentPerYear" INTEGER,
+    "status" TEXT NOT NULL DEFAULT 'Available',
+    "amenities" TEXT NOT NULL DEFAULT '[]',
+    "photos" TEXT NOT NULL DEFAULT '{}',
+    "description" TEXT,
+    "listedBy" TEXT NOT NULL DEFAULT 'Beta Facility',
+    "latitude" DOUBLE PRECISION,
+    "longitude" DOUBLE PRECISION,
+    "active" BOOLEAN NOT NULL DEFAULT true,
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updatedAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    CONSTRAINT "RentalListing_pkey" PRIMARY KEY ("id")
+);

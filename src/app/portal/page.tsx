@@ -73,6 +73,11 @@ export default async function PortalPage() {
             Status Report
           </ButtonLink>
           {isAdmin && (
+            <ButtonLink href="/portal/rentals" size="sm" variant="outline">
+              Manage Rentals
+            </ButtonLink>
+          )}
+          {isAdmin && (
             <ButtonLink href="/portal/users" size="sm" variant="outline">
               Manage Users
             </ButtonLink>

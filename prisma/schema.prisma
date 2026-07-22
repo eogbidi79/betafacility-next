@@ -174,6 +174,31 @@ model AdvertiseSubmission {
   createdAt       DateTime      @default(now())
 }
 
+model RentalListing {
+  id             String   @id @default(cuid())
+  title          String
+  rentalCategory String // "Short-let" | "Long-Term"
+  bedroomType    String // "Studio" | "1 Bedroom" | "2 Bedroom" | "3 Bedroom"
+  totalUnits     Int      @default(1)
+  availableUnits Int      @default(0)
+  state          String   @default("Lagos")
+  city           String   @default("Ajah")
+  area           String?
+  address        String?
+  price          Int? // short-let price per night
+  rentPerYear    Int? // long-term rent per year
+  status         String   @default("Available") // "Coming Soon" | "Available" | "Fully Occupied"
+  amenities      String   @default("[]") // JSON string[]
+  photos         String   @default("{}") // JSON { livingRoom, bedroom, toiletBathroom, kitchen, building: string[] }
+  description    String?
+  listedBy       String   @default("Beta Facility") // "Beta Facility" | "Agency" | "Individual"
+  latitude       Float?
+  longitude      Float?
+  active         Boolean  @default(true)
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+}
+
 model Voucher {
   id             String    @id @default(cuid())
   code           String    @unique
