@@ -6,6 +6,7 @@ import { Container } from "@/components/ui/Container";
 import { Badge } from "@/components/ui/Badge";
 import { ButtonLink, Button } from "@/components/ui/Button";
 import { Field, Input, Select, Textarea } from "@/components/ui/Field";
+import { PhotoUploader } from "@/components/portal/PhotoUploader";
 import { formatNaira } from "@/lib/utils";
 import { NIGERIAN_STATES, BEDROOM_TYPES, RENTAL_CATEGORIES, RENTAL_STATUSES, LISTED_BY } from "@/data/nigeria";
 import { createListing, updateListing, deleteListing, setAvailability } from "./actions";
@@ -79,21 +80,13 @@ function Fields({ l }: { l?: ListingDTO }) {
       </Field>
 
       <div className="lg:col-span-3">
-        <p className="mb-1.5 text-sm font-medium text-ink-soft">Photos — one image URL per line, per room</p>
+        <p className="mb-1.5 text-sm font-medium text-ink-soft">Photos — upload per room</p>
         <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-5">
-          {(
-            [
-              ["building", "Building", l?.photos.building],
-              ["living", "Living room", l?.photos.livingRoom],
-              ["bedroom", "Bedroom", l?.photos.bedroom],
-              ["toilet", "Toilet/Bath", l?.photos.toiletBathroom],
-              ["kitchen", "Kitchen", l?.photos.kitchen],
-            ] as [string, string, string[] | undefined][]
-          ).map(([name, label, vals]) => (
-            <Field key={name} label={label} htmlFor={name}>
-              <Textarea name={name} rows={3} defaultValue={(vals ?? []).join("\n")} className="text-xs" />
-            </Field>
-          ))}
+          <PhotoUploader name="building" label="Building" initial={l?.photos.building} />
+          <PhotoUploader name="living" label="Living room" initial={l?.photos.livingRoom} />
+          <PhotoUploader name="bedroom" label="Bedroom" initial={l?.photos.bedroom} />
+          <PhotoUploader name="toilet" label="Toilet/Bath" initial={l?.photos.toiletBathroom} />
+          <PhotoUploader name="kitchen" label="Kitchen" initial={l?.photos.kitchen} />
         </div>
       </div>
     </div>

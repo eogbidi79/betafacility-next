@@ -29,13 +29,23 @@ export function RentalListingCard({ listing }: { listing: ListingDTO }) {
     >
       <div className="relative aspect-[4/3] overflow-hidden bg-gray-100">
         {cover ? (
-          <Image
-            src={cover}
-            alt={listing.title}
-            fill
-            sizes="(max-width: 768px) 100vw, 33vw"
-            className="object-cover transition-transform duration-500 group-hover:scale-105"
-          />
+          cover.startsWith("/") ? (
+            <Image
+              src={cover}
+              alt={listing.title}
+              fill
+              sizes="(max-width: 768px) 100vw, 33vw"
+              className="object-cover transition-transform duration-500 group-hover:scale-105"
+            />
+          ) : (
+            // Uploaded (data URL) or external (Cloudinary) — plain img.
+            // eslint-disable-next-line @next/next/no-img-element
+            <img
+              src={cover}
+              alt={listing.title}
+              className="absolute inset-0 h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
+            />
+          )
         ) : (
           <div className="flex h-full items-center justify-center text-4xl font-extrabold text-brand-600/30">
             Beta
