@@ -12,16 +12,24 @@ export type ListingDTO = {
   id: string;
   title: string;
   rentalCategory: string;
+  propertyType: string;
   bedroomType: string;
+  bathrooms: number | null;
   totalUnits: number;
   availableUnits: number;
+  country: string;
   state: string;
   city: string;
   area: string | null;
   address: string | null;
+  postalCode: string | null;
   price: number | null;
   rentPerYear: number | null;
+  currencyCode: string;
   status: string;
+  furnished: boolean;
+  petFriendly: boolean;
+  parking: boolean;
   amenities: string[];
   photos: Photos;
   description: string | null;
@@ -70,16 +78,24 @@ export function toDTO(l: RentalListing): ListingDTO {
     id: l.id,
     title: l.title,
     rentalCategory: l.rentalCategory,
+    propertyType: l.propertyType,
     bedroomType: l.bedroomType,
+    bathrooms: l.bathrooms,
     totalUnits: l.totalUnits,
     availableUnits: l.availableUnits,
+    country: l.country,
     state: l.state,
     city: l.city,
     area: l.area,
     address: l.address,
+    postalCode: l.postalCode,
     price: l.price,
     rentPerYear: l.rentPerYear,
+    currencyCode: l.currencyCode,
     status: l.status,
+    furnished: l.furnished,
+    petFriendly: l.petFriendly,
+    parking: l.parking,
     amenities: parseAmenities(l.amenities),
     photos: parsePhotos(l.photos),
     description: l.description,

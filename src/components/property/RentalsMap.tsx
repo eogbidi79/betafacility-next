@@ -4,7 +4,7 @@ import { MapContainer, TileLayer, Marker, Popup } from "react-leaflet";
 import L from "leaflet";
 import "leaflet/dist/leaflet.css";
 import type { ListingDTO } from "@/lib/listings";
-import { CITY_COORDS } from "@/data/nigeria";
+import { CITY_COORDS } from "@/data/locations";
 
 const pin = L.divIcon({
   className: "",

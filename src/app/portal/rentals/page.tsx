@@ -7,8 +7,8 @@ import { Badge } from "@/components/ui/Badge";
 import { ButtonLink, Button } from "@/components/ui/Button";
 import { Field, Input, Select, Textarea } from "@/components/ui/Field";
 import { PhotoUploader } from "@/components/portal/PhotoUploader";
-import { formatNaira } from "@/lib/utils";
-import { NIGERIAN_STATES, BEDROOM_TYPES, RENTAL_CATEGORIES, RENTAL_STATUSES, LISTED_BY } from "@/data/nigeria";
+import { formatMoney } from "@/lib/currency";
+import { COUNTRY_NAMES, PROPERTY_TYPES, BEDROOM_TYPES, RENTAL_CATEGORIES, RENTAL_STATUSES, LISTED_BY, CURRENCIES } from "@/data/locations";
 import { createListing, updateListing, deleteListing, setAvailability } from "./actions";
 
 export const dynamic = "force-dynamic";
@@ -30,10 +30,18 @@ function Fields({ l }: { l?: ListingDTO }) {
           {RENTAL_CATEGORIES.map((x) => <option key={x}>{x}</option>)}
         </Select>
       </Field>
+      <Field label="Property type" htmlFor="propertyType">
+        <Select name="propertyType" defaultValue={l?.propertyType ?? "Apartment"}>
+          {PROPERTY_TYPES.map((x) => <option key={x}>{x}</option>)}
+        </Select>
+      </Field>
       <Field label="Bedroom type" htmlFor="bedroomType">
         <Select name="bedroomType" defaultValue={l?.bedroomType ?? "Studio"}>
           {BEDROOM_TYPES.map((x) => <option key={x}>{x}</option>)}
         </Select>
+      </Field>
+      <Field label="Bathrooms" htmlFor="bathrooms">
+        <Input name="bathrooms" type="number" min={0} defaultValue={l?.bathrooms ?? ""} />
       </Field>
       <Field label="Total units" htmlFor="totalUnits">
         <Input name="totalUnits" type="number" min={0} defaultValue={l?.totalUnits ?? 1} />
@@ -46,10 +54,13 @@ function Fields({ l }: { l?: ListingDTO }) {
           {RENTAL_STATUSES.map((x) => <option key={x}>{x}</option>)}
         </Select>
       </Field>
-      <Field label="State" htmlFor="state">
-        <Select name="state" defaultValue={l?.state ?? "Lagos"}>
-          {NIGERIAN_STATES.map((x) => <option key={x}>{x}</option>)}
+      <Field label="Country" htmlFor="country">
+        <Select name="country" defaultValue={l?.country ?? "Nigeria"}>
+          {COUNTRY_NAMES.map((x) => <option key={x}>{x}</option>)}
         </Select>
+      </Field>
+      <Field label="State / Province / Territory" htmlFor="state">
+        <Input name="state" defaultValue={l?.state ?? "Lagos"} />
       </Field>
       <Field label="City" htmlFor="city">
         <Input name="city" defaultValue={l?.city ?? "Ajah"} />
@@ -57,15 +68,34 @@ function Fields({ l }: { l?: ListingDTO }) {
       <Field label="Area / neighbourhood" htmlFor="area">
         <Input name="area" defaultValue={l?.area ?? ""} />
       </Field>
-      <Field label="Address (optional)" htmlFor="address" className="lg:col-span-2">
+      <Field label="Postal code" htmlFor="postalCode">
+        <Input name="postalCode" defaultValue={l?.postalCode ?? ""} />
+      </Field>
+      <Field label="Address (optional)" htmlFor="address" className="lg:col-span-3">
         <Input name="address" defaultValue={l?.address ?? ""} />
       </Field>
-      <Field label="Short-let price / night (₦)" htmlFor="price">
+      <Field label="Currency" htmlFor="currencyCode">
+        <Select name="currencyCode" defaultValue={l?.currencyCode ?? "NGN"}>
+          {CURRENCIES.map((x) => <option key={x}>{x}</option>)}
+        </Select>
+      </Field>
+      <Field label="Short-let price / night" htmlFor="price">
         <Input name="price" type="number" min={0} defaultValue={l?.price ?? ""} />
       </Field>
-      <Field label="Rent per year (₦)" htmlFor="rentPerYear">
+      <Field label="Rent per year" htmlFor="rentPerYear">
         <Input name="rentPerYear" type="number" min={0} defaultValue={l?.rentPerYear ?? ""} />
       </Field>
+      <div className="flex flex-wrap items-center gap-4 lg:col-span-3">
+        <label className="flex items-center gap-1.5 text-sm text-ink-soft">
+          <input type="checkbox" name="furnished" defaultChecked={l?.furnished} className="h-4 w-4 rounded border-gray-300 text-brand-500" /> Furnished
+        </label>
+        <label className="flex items-center gap-1.5 text-sm text-ink-soft">
+          <input type="checkbox" name="parking" defaultChecked={l?.parking} className="h-4 w-4 rounded border-gray-300 text-brand-500" /> Parking
+        </label>
+        <label className="flex items-center gap-1.5 text-sm text-ink-soft">
+          <input type="checkbox" name="petFriendly" defaultChecked={l?.petFriendly} className="h-4 w-4 rounded border-gray-300 text-brand-500" /> Pet friendly
+        </label>
+      </div>
       <Field label="Latitude (optional)" htmlFor="latitude">
         <Input name="latitude" defaultValue={l?.latitude ?? ""} placeholder="6.4698" />
       </Field>
@@ -128,8 +158,8 @@ export default async function ManageRentalsPage() {
               <div>
                 <p className="font-semibold text-ink">{l.title}</p>
                 <p className="text-xs text-ink-muted">
-                  {l.rentalCategory} · {l.bedroomType} · {l.city}, {l.state} · {l.listedBy}
-                  {l.rentPerYear ? ` · ${formatNaira(l.rentPerYear)}/yr` : l.price ? ` · ${formatNaira(l.price)}/night` : ""}
+                  {l.rentalCategory} · {l.bedroomType} · {l.city}, {l.state}, {l.country} · {l.listedBy}
+                  {l.rentPerYear ? ` · ${formatMoney(l.rentPerYear, l.currencyCode)}/yr` : l.price ? ` · ${formatMoney(l.price, l.currencyCode)}/night` : ""}
                 </p>
               </div>
               <div className="flex items-center gap-2">

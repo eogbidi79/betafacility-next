@@ -3,118 +3,202 @@
 import { useMemo, useState } from "react";
 import dynamic from "next/dynamic";
 import { RentalListingCard } from "./RentalListingCard";
-import { Select } from "@/components/ui/Field";
+import { Select, Input } from "@/components/ui/Field";
 import type { ListingDTO } from "@/lib/listings";
-import { NIGERIA, NIGERIAN_STATES } from "@/data/nigeria";
+import {
+  COUNTRY_NAMES,
+  regionsOf,
+  citiesOf,
+  PROPERTY_TYPES,
+  BEDROOM_TYPES,
+  RENTAL_CATEGORIES,
+  RENTAL_STATUSES,
+  LISTED_BY,
+} from "@/data/locations";
 
 const RentalsMap = dynamic(() => import("./RentalsMap"), {
   ssr: false,
   loading: () => (
-    <div className="flex h-full items-center justify-center bg-gray-100 text-sm text-ink-muted">
-      Loading map…
-    </div>
+    <div className="flex h-full items-center justify-center bg-gray-100 text-sm text-ink-muted">Loading map…</div>
   ),
 });
 
 const ALL = "all";
+const price = (l: ListingDTO) => l.rentPerYear ?? l.price ?? 0;
 
 export function RentalsBrowser({ listings }: { listings: ListingDTO[] }) {
-  const [state, setState] = useState(ALL);
+  const [country, setCountry] = useState(ALL);
+  const [region, setRegion] = useState(ALL);
   const [city, setCity] = useState(ALL);
   const [category, setCategory] = useState(ALL);
+  const [propertyType, setPropertyType] = useState(ALL);
   const [bedroom, setBedroom] = useState(ALL);
   const [availability, setAvailability] = useState(ALL);
+  const [listedBy, setListedBy] = useState(ALL);
+  const [minPrice, setMinPrice] = useState("");
+  const [maxPrice, setMaxPrice] = useState("");
+  const [furnished, setFurnished] = useState(false);
+  const [parking, setParking] = useState(false);
+  const [pet, setPet] = useState(false);
 
-  const cities = state !== ALL ? (NIGERIA[state] ?? []) : [];
+  const regions = country !== ALL ? regionsOf(country) : [];
+  const cities = country !== ALL && region !== ALL ? citiesOf(country, region) : [];
 
-  const filtered = useMemo(
-    () =>
-      listings.filter(
-        (l) =>
-          (state === ALL || l.state === state) &&
-          (city === ALL || l.city === city) &&
-          (category === ALL || l.rentalCategory === category) &&
-          (bedroom === ALL || l.bedroomType === bedroom) &&
-          (availability === ALL || l.status === availability),
-      ),
-    [listings, state, city, category, bedroom, availability],
-  );
+  const filtered = useMemo(() => {
+    const min = minPrice ? Number(minPrice) : null;
+    const max = maxPrice ? Number(maxPrice) : null;
+    return listings.filter(
+      (l) =>
+        (country === ALL || l.country === country) &&
+        (region === ALL || l.state === region) &&
+        (city === ALL || l.city === city) &&
+        (category === ALL || l.rentalCategory === category) &&
+        (propertyType === ALL || l.propertyType === propertyType) &&
+        (bedroom === ALL || l.bedroomType === bedroom) &&
+        (availability === ALL || l.status === availability) &&
+        (listedBy === ALL || l.listedBy === listedBy) &&
+        (min === null || price(l) >= min) &&
+        (max === null || price(l) <= max) &&
+        (!furnished || l.furnished) &&
+        (!parking || l.parking) &&
+        (!pet || l.petFriendly),
+    );
+  }, [listings, country, region, city, category, propertyType, bedroom, availability, listedBy, minPrice, maxPrice, furnished, parking, pet]);
 
   const reset = () => {
-    setState(ALL);
+    setCountry(ALL);
+    setRegion(ALL);
     setCity(ALL);
     setCategory(ALL);
+    setPropertyType(ALL);
     setBedroom(ALL);
     setAvailability(ALL);
+    setListedBy(ALL);
+    setMinPrice("");
+    setMaxPrice("");
+    setFurnished(false);
+    setParking(false);
+    setPet(false);
   };
 
   return (
     <div>
-      {/* Filters */}
       <div className="rounded-2xl border border-gray-200 bg-white p-4 shadow-card">
-        <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-5">
+        <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
           <Select
-            value={state}
+            value={country}
             onChange={(e) => {
-              setState(e.target.value);
+              setCountry(e.target.value);
+              setRegion(ALL);
               setCity(ALL);
             }}
-            aria-label="State"
+            aria-label="Country"
           >
-            <option value={ALL}>All states</option>
-            {NIGERIAN_STATES.map((s) => (
-              <option key={s} value={s}>
-                {s}
-              </option>
+            <option value={ALL}>All countries</option>
+            {COUNTRY_NAMES.map((c) => (
+              <option key={c}>{c}</option>
             ))}
           </Select>
 
-          <Select value={city} onChange={(e) => setCity(e.target.value)} aria-label="City" disabled={state === ALL}>
-            <option value={ALL}>{state === ALL ? "Select a state first" : "All cities"}</option>
+          <Select
+            value={region}
+            onChange={(e) => {
+              setRegion(e.target.value);
+              setCity(ALL);
+            }}
+            aria-label="State / Province"
+            disabled={country === ALL}
+          >
+            <option value={ALL}>{country === ALL ? "Select a country" : "All states / provinces"}</option>
+            {regions.map((r) => (
+              <option key={r}>{r}</option>
+            ))}
+          </Select>
+
+          <Select value={city} onChange={(e) => setCity(e.target.value)} aria-label="City" disabled={region === ALL}>
+            <option value={ALL}>{region === ALL ? "All cities" : "All cities"}</option>
             {cities.map((c) => (
-              <option key={c} value={c}>
-                {c}
-              </option>
+              <option key={c}>{c}</option>
             ))}
           </Select>
 
           <Select value={category} onChange={(e) => setCategory(e.target.value)} aria-label="Rental type">
-            <option value={ALL}>Short-let &amp; Long-Term</option>
-            <option value="Short-let">Short-let</option>
-            <option value="Long-Term">Long-Term</option>
+            <option value={ALL}>Any rental type</option>
+            {RENTAL_CATEGORIES.map((c) => (
+              <option key={c}>{c}</option>
+            ))}
           </Select>
 
-          <Select value={bedroom} onChange={(e) => setBedroom(e.target.value)} aria-label="Bedroom type">
-            <option value={ALL}>All bedrooms</option>
-            <option value="Studio">Studio</option>
-            <option value="1 Bedroom">1 Bedroom</option>
-            <option value="2 Bedroom">2 Bedroom</option>
-            <option value="3 Bedroom">3 Bedroom</option>
+          <Select value={propertyType} onChange={(e) => setPropertyType(e.target.value)} aria-label="Property type">
+            <option value={ALL}>Any property type</option>
+            {PROPERTY_TYPES.map((p) => (
+              <option key={p}>{p}</option>
+            ))}
           </Select>
 
-          <Select value={availability} onChange={(e) => setAvailability(e.target.value)} aria-label="Availability">
+          <Select value={bedroom} onChange={(e) => setBedroom(e.target.value)} aria-label="Bedrooms">
+            <option value={ALL}>Any bedrooms</option>
+            {BEDROOM_TYPES.map((b) => (
+              <option key={b}>{b}</option>
+            ))}
+          </Select>
+
+          <Select value={availability} onChange={(e) => setAvailability(e.target.value)} aria-label="Status">
             <option value={ALL}>Any status</option>
-            <option value="Available">Available</option>
-            <option value="Coming Soon">Coming Soon</option>
-            <option value="Fully Occupied">Fully Occupied</option>
+            {RENTAL_STATUSES.map((s) => (
+              <option key={s}>{s}</option>
+            ))}
           </Select>
+
+          <Select value={listedBy} onChange={(e) => setListedBy(e.target.value)} aria-label="Listed by">
+            <option value={ALL}>Anyone (Beta Facility, Agency, Individual)</option>
+            {LISTED_BY.map((x) => (
+              <option key={x}>{x}</option>
+            ))}
+          </Select>
+
+          <Input
+            type="number"
+            inputMode="numeric"
+            placeholder="Min price"
+            value={minPrice}
+            onChange={(e) => setMinPrice(e.target.value)}
+            aria-label="Minimum price"
+          />
+          <Input
+            type="number"
+            inputMode="numeric"
+            placeholder="Max price"
+            value={maxPrice}
+            onChange={(e) => setMaxPrice(e.target.value)}
+            aria-label="Maximum price"
+          />
         </div>
-        <div className="mt-3 flex items-center justify-between">
-          <p className="text-sm text-ink-muted">
-            {filtered.length} listing{filtered.length === 1 ? "" : "s"}
-          </p>
+
+        <div className="mt-3 flex flex-wrap items-center gap-4">
+          <label className="flex items-center gap-1.5 text-sm text-ink-soft">
+            <input type="checkbox" checked={furnished} onChange={(e) => setFurnished(e.target.checked)} className="h-4 w-4 rounded border-gray-300 text-brand-500" />
+            Furnished
+          </label>
+          <label className="flex items-center gap-1.5 text-sm text-ink-soft">
+            <input type="checkbox" checked={parking} onChange={(e) => setParking(e.target.checked)} className="h-4 w-4 rounded border-gray-300 text-brand-500" />
+            Parking
+          </label>
+          <label className="flex items-center gap-1.5 text-sm text-ink-soft">
+            <input type="checkbox" checked={pet} onChange={(e) => setPet(e.target.checked)} className="h-4 w-4 rounded border-gray-300 text-brand-500" />
+            Pet friendly
+          </label>
+          <span className="ml-auto text-sm text-ink-muted">{filtered.length} listing{filtered.length === 1 ? "" : "s"}</span>
           <button onClick={reset} className="text-sm font-medium text-brand-600 hover:text-brand-700">
-            Reset filters
+            Reset
           </button>
         </div>
       </div>
 
-      {/* Map */}
       <div className="mt-6 h-80 overflow-hidden rounded-2xl border border-gray-200 shadow-card sm:h-96">
         <RentalsMap listings={filtered} />
       </div>
 
-      {/* Listings */}
       {filtered.length > 0 ? (
         <div className="mt-8 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
           {filtered.map((l) => (

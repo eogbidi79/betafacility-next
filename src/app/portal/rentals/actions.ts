@@ -26,16 +26,24 @@ function collect(fd: FormData) {
   return {
     title: String(fd.get("title") ?? "").trim(),
     rentalCategory: String(fd.get("rentalCategory") ?? "Short-let"),
+    propertyType: String(fd.get("propertyType") ?? "Apartment"),
     bedroomType: String(fd.get("bedroomType") ?? "Studio"),
+    bathrooms: num(fd.get("bathrooms")),
     totalUnits: num(fd.get("totalUnits")) ?? 1,
     availableUnits: num(fd.get("availableUnits")) ?? 0,
-    state: String(fd.get("state") ?? "Lagos").trim() || "Lagos",
+    country: String(fd.get("country") ?? "Nigeria").trim() || "Nigeria",
+    state: String(fd.get("state") ?? "").trim() || "Lagos",
     city: String(fd.get("city") ?? "").trim() || "Ajah",
     area: String(fd.get("area") ?? "").trim() || null,
     address: String(fd.get("address") ?? "").trim() || null,
+    postalCode: String(fd.get("postalCode") ?? "").trim() || null,
     price: num(fd.get("price")),
     rentPerYear: num(fd.get("rentPerYear")),
+    currencyCode: String(fd.get("currencyCode") ?? "NGN"),
     status: String(fd.get("status") ?? "Available"),
+    furnished: Boolean(fd.get("furnished")),
+    petFriendly: Boolean(fd.get("petFriendly")),
+    parking: Boolean(fd.get("parking")),
     amenities: JSON.stringify(
       String(fd.get("amenities") ?? "")
         .split(",")

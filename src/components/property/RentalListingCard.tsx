@@ -1,7 +1,7 @@
 import Image from "next/image";
 import { Badge } from "@/components/ui/Badge";
 import { ButtonLink } from "@/components/ui/Button";
-import { formatNaira } from "@/lib/utils";
+import { formatMoney } from "@/lib/currency";
 import { galleryPhotos, type ListingDTO } from "@/lib/listings";
 
 function statusTone(status: string): "success" | "brand" | "neutral" {
@@ -16,9 +16,9 @@ export function RentalListingCard({ listing }: { listing: ListingDTO }) {
   const thumbs = gallery.slice(1, 5);
   const priceText =
     listing.rentPerYear != null
-      ? `${formatNaira(listing.rentPerYear)}`
+      ? formatMoney(listing.rentPerYear, listing.currencyCode)
       : listing.price != null
-        ? `${formatNaira(listing.price)}`
+        ? formatMoney(listing.price, listing.currencyCode)
         : "On request";
   const priceUnit = listing.rentPerYear != null ? "per year" : listing.price != null ? "per night" : "";
 
@@ -73,13 +73,19 @@ export function RentalListingCard({ listing }: { listing: ListingDTO }) {
       <div className="flex flex-1 flex-col p-5">
         <h3 className="text-lg font-bold text-ink">{listing.title}</h3>
         <p className="mt-1 text-sm text-ink-muted">
-          {[listing.area, listing.city, listing.state].filter(Boolean).join(", ")}
+          {[listing.area, listing.city, listing.state, listing.country].filter(Boolean).join(", ")}
         </p>
 
-        <div className="mt-3 flex flex-wrap gap-3 text-sm text-ink-soft">
+        <div className="mt-3 flex flex-wrap gap-x-3 gap-y-1 text-sm text-ink-soft">
           <span>
             <strong className="font-semibold text-ink">{listing.bedroomType}</strong>
           </span>
+          {listing.bathrooms != null && (
+            <span>
+              <strong className="font-semibold text-ink">{listing.bathrooms}</strong> bath
+            </span>
+          )}
+          <span className="text-ink-muted">· {listing.propertyType}</span>
           <span>
             <strong className="font-semibold text-ink">{listing.availableUnits}</strong> of{" "}
             {listing.totalUnits} available

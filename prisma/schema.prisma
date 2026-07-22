@@ -177,17 +177,26 @@ model AdvertiseSubmission {
 model RentalListing {
   id             String   @id @default(cuid())
   title          String
-  rentalCategory String // "Short-let" | "Long-Term"
-  bedroomType    String // "Studio" | "1 Bedroom" | "2 Bedroom" | "3 Bedroom"
+  rentalCategory String // "Short-let" | "Long-Term" | "Sale"
+  propertyType   String   @default("Apartment") // Studio|1-4+ Bedroom|Duplex|Detached|Semi-Detached|Townhouse|Condo|Apartment|Commercial|Land
+  bedroomType    String // "Studio" | "1 Bedroom" | "2 Bedroom" | "3 Bedroom" | "4 Bedroom+"
+  bathrooms      Int?
   totalUnits     Int      @default(1)
   availableUnits Int      @default(0)
-  state          String   @default("Lagos")
+  // Location (denormalised strings; country makes it multi-market)
+  country        String   @default("Nigeria")
+  state          String   @default("Lagos") // state / province / territory
   city           String   @default("Ajah")
   area           String?
   address        String?
+  postalCode     String?
   price          Int? // short-let price per night
   rentPerYear    Int? // long-term rent per year
+  currencyCode   String   @default("NGN") // NGN | CAD
   status         String   @default("Available") // "Coming Soon" | "Available" | "Fully Occupied"
+  furnished      Boolean  @default(false)
+  petFriendly    Boolean  @default(false)
+  parking        Boolean  @default(false)
   amenities      String   @default("[]") // JSON string[]
   photos         String   @default("{}") // JSON { livingRoom, bedroom, toiletBathroom, kitchen, building: string[] }
   description    String?
