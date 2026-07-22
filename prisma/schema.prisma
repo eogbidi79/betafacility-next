@@ -208,6 +208,32 @@ model RentalListing {
   updatedAt      DateTime @updatedAt
 }
 
+/// Agencies, property owners and service vendors that list on the platform.
+/// One model with `kind` keeps the schema small; verification gates public display.
+model Organization {
+  id          String   @id @default(cuid())
+  slug        String   @unique
+  kind        String   @default("AGENCY") // AGENCY | OWNER | VENDOR
+  name        String
+  email       String?
+  phone       String?
+  country     String   @default("Nigeria")
+  state       String?
+  city        String?
+  regNumber   String? // CAC number (NG) / business number (CA)
+  logoUrl     String?
+  website     String?
+  description String?
+  // Login that manages this organisation (matches a User.email).
+  userEmail   String?
+  verified    Boolean  @default(false)
+  active      Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([kind, verified, active])
+}
+
 model Voucher {
   id             String    @id @default(cuid())
   code           String    @unique
