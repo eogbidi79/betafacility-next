@@ -51,6 +51,9 @@ services:
         sync: false
       - key: R2_PUBLIC_URL
         sync: false
+      # --- Maps (optional: Mapbox tiles; falls back to OpenStreetMap) ---
+      - key: NEXT_PUBLIC_MAPBOX_TOKEN
+        sync: false
       # --- Email (Resend) ---
       - key: RESEND_API_KEY
         sync: false

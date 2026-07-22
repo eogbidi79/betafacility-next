@@ -2,10 +2,11 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useState } from "react";
+import { Suspense, useState } from "react";
 import { Logo } from "./Logo";
 import { ButtonLink } from "@/components/ui/Button";
 import { Container } from "@/components/ui/Container";
+import { SearchBox } from "@/components/search/SearchBox";
 import { mainNav, site } from "@/data/site";
 import { cn } from "@/lib/utils";
 
@@ -40,6 +41,9 @@ export function Header() {
         </nav>
 
         <div className="ml-auto flex items-center gap-2 lg:ml-2">
+          <Suspense fallback={null}>
+            <SearchBox className="hidden w-48 xl:block" placeholder="Search…" />
+          </Suspense>
           <a
             href={site.phoneHref}
             className="hidden text-sm font-semibold text-ink-soft hover:text-brand-600 sm:inline"
@@ -71,6 +75,11 @@ export function Header() {
       {open && (
         <div className="border-t border-gray-200 bg-white lg:hidden">
           <Container className="flex flex-col py-2">
+            <div className="px-1 py-2">
+              <Suspense fallback={null}>
+                <SearchBox />
+              </Suspense>
+            </div>
             {mainNav.map((item) => (
               <Link
                 key={item.href}

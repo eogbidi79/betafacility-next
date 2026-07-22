@@ -23,6 +23,24 @@ function scrollTo(id: string) {
   document.getElementById(`listing-${id}`)?.scrollIntoView({ behavior: "smooth", block: "center" });
 }
 
+// Use Mapbox tiles when a public token is configured; otherwise fall back to
+// OpenStreetMap so the map always renders (no key required in dev).
+const MAPBOX_TOKEN = process.env.NEXT_PUBLIC_MAPBOX_TOKEN;
+const tiles = MAPBOX_TOKEN
+  ? {
+      url: `https://api.mapbox.com/styles/v1/mapbox/streets-v12/tiles/512/{z}/{x}/{y}@2x?access_token=${MAPBOX_TOKEN}`,
+      attribution:
+        '&copy; <a href="https://www.mapbox.com/about/maps/">Mapbox</a> &copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>',
+      tileSize: 512,
+      zoomOffset: -1,
+    }
+  : {
+      url: "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",
+      attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>',
+      tileSize: 256,
+      zoomOffset: 0,
+    };
+
 export default function RentalsMap({ listings }: { listings: ListingDTO[] }) {
   const pts = listings
     .map((l) => ({ l, pos: coords(l) }))
@@ -38,8 +56,10 @@ export default function RentalsMap({ listings }: { listings: ListingDTO[] }) {
       style={{ height: "100%", width: "100%" }}
     >
       <TileLayer
-        attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
-        url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+        attribution={tiles.attribution}
+        url={tiles.url}
+        tileSize={tiles.tileSize}
+        zoomOffset={tiles.zoomOffset}
       />
       {pts.map(({ l, pos }) => (
         <Marker
