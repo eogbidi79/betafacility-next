@@ -43,6 +43,8 @@ export function RentalListingCard({ listing }: { listing: ListingDTO }) {
             <img
               src={cover}
               alt={listing.title}
+              loading="lazy"
+              decoding="async"
               className="absolute inset-0 h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
             />
           )
@@ -62,7 +64,7 @@ export function RentalListingCard({ listing }: { listing: ListingDTO }) {
           {thumbs.map((src, i) => (
             <div key={i} className="relative h-14 flex-1 overflow-hidden rounded">
               {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img src={src} alt="" className="h-full w-full object-cover" />
+              <img src={src} alt="" loading="lazy" decoding="async" className="h-full w-full object-cover" />
             </div>
           ))}
         </div>
