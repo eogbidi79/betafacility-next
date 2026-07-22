@@ -1,15 +1,15 @@
 // Client-side image handling for the admin photo uploader.
-// If Cloudinary is configured (public, unsigned), upload there and store the
-// hosted URL. Otherwise, compress the image and store it inline (data URL) so
-// uploads work with zero setup.
+// Order of preference:
+//   1) Cloudflare R2 via /api/upload (server-side, if configured)
+//   2) Cloudinary unsigned (client, if configured)
+//   3) Inline compressed data URL (always works, zero setup)
 
 const CLOUD = process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME;
 const PRESET = process.env.NEXT_PUBLIC_CLOUDINARY_UPLOAD_PRESET;
-
 export const cloudinaryConfigured = Boolean(CLOUD && PRESET);
 
-/** Downscale + JPEG-compress a file to a data URL (fallback storage). */
-export async function compressToDataUrl(file: File, max = 1280, quality = 0.72): Promise<string> {
+/** Downscale + JPEG-compress a file to a Blob. */
+async function compress(file: File, max = 1600, quality = 0.82): Promise<Blob> {
   const bitmap = await createImageBitmap(file);
   const scale = Math.min(1, max / Math.max(bitmap.width, bitmap.height));
   const w = Math.round(bitmap.width * scale);
@@ -21,30 +21,67 @@ export async function compressToDataUrl(file: File, max = 1280, quality = 0.72):
   if (!ctx) throw new Error("Canvas unavailable");
   ctx.drawImage(bitmap, 0, 0, w, h);
   bitmap.close?.();
-  return canvas.toDataURL("image/jpeg", quality);
+  return await new Promise<Blob>((resolve, reject) =>
+    canvas.toBlob((b) => (b ? resolve(b) : reject(new Error("compress failed"))), "image/jpeg", quality),
+  );
 }
 
-async function uploadToCloudinary(file: File): Promise<string> {
-  const form = new FormData();
-  form.append("file", file);
-  form.append("upload_preset", PRESET as string);
+function blobToDataUrl(blob: Blob): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const r = new FileReader();
+    r.onload = () => resolve(String(r.result));
+    r.onerror = reject;
+    r.readAsDataURL(blob);
+  });
+}
+
+async function uploadToR2(blob: Blob): Promise<string | null> {
+  const fd = new FormData();
+  fd.append("file", new File([blob], "photo.jpg", { type: "image/jpeg" }));
+  const res = await fetch("/api/upload", { method: "POST", body: fd });
+  if (!res.ok) return null; // 501 = not configured → fall through
+  const json = await res.json();
+  return (json.url as string) ?? null;
+}
+
+async function uploadToCloudinary(blob: Blob): Promise<string> {
+  const fd = new FormData();
+  fd.append("file", new File([blob], "photo.jpg", { type: "image/jpeg" }));
+  fd.append("upload_preset", PRESET as string);
   const res = await fetch(`https://api.cloudinary.com/v1_1/${CLOUD}/image/upload`, {
     method: "POST",
-    body: form,
+    body: fd,
   });
   if (!res.ok) throw new Error("Cloudinary upload failed");
   const json = await res.json();
   return json.secure_url as string;
 }
 
-/** Returns a URL (Cloudinary) or a compressed data URL (fallback). */
 export async function processImage(file: File): Promise<string> {
+  let blob: Blob;
+  try {
+    blob = await compress(file);
+  } catch {
+    blob = file;
+  }
+
+  // 1) Cloudflare R2 (server)
+  try {
+    const url = await uploadToR2(blob);
+    if (url) return url;
+  } catch {
+    /* fall through */
+  }
+
+  // 2) Cloudinary (client)
   if (cloudinaryConfigured) {
     try {
-      return await uploadToCloudinary(file);
+      return await uploadToCloudinary(blob);
     } catch {
-      // fall through to inline
+      /* fall through */
     }
   }
-  return compressToDataUrl(file);
+
+  // 3) Inline
+  return blobToDataUrl(blob);
 }

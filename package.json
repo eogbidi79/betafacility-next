@@ -21,6 +21,7 @@
     "seed": "node prisma/seed.mjs"
   },
   "dependencies": {
+    "@aws-sdk/client-s3": "^3.1092.0",
     "@prisma/client": "^6.19.3",
     "bcryptjs": "^3.0.3",
     "leaflet": "^1.9.4",
