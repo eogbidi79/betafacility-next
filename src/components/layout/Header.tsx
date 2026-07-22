@@ -7,15 +7,27 @@ import { Logo } from "./Logo";
 import { ButtonLink } from "@/components/ui/Button";
 import { Container } from "@/components/ui/Container";
 import { SearchBox } from "@/components/search/SearchBox";
-import { mainNav, site } from "@/data/site";
+import { mainNav, site, type NavEntry } from "@/data/site";
 import { cn } from "@/lib/utils";
+
+function Chevron({ className }: { className?: string }) {
+  return (
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className={className}>
+      <path d="M6 9l6 6 6-6" strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
+  );
+}
 
 export function Header() {
   const pathname = usePathname();
   const [open, setOpen] = useState(false);
+  const [expanded, setExpanded] = useState<string | null>(null);
 
   const isActive = (href: string) =>
     href === "/" ? pathname === "/" : pathname.startsWith(href);
+
+  const groupActive = (entry: NavEntry) =>
+    entry.href ? isActive(entry.href) : (entry.children ?? []).some((c) => isActive(c.href));
 
   return (
     <header className="sticky top-0 z-50 border-b border-gray-200 bg-white/90 backdrop-blur">
@@ -23,21 +35,59 @@ export function Header() {
         <Logo />
 
         <nav className="ml-auto hidden items-center gap-1 lg:flex" aria-label="Primary">
-          {mainNav.map((item) => (
-            <Link
-              key={item.href}
-              href={item.href}
-              aria-current={isActive(item.href) ? "page" : undefined}
-              className={cn(
-                "rounded-md px-3 py-2 text-sm font-medium transition-colors",
-                isActive(item.href)
-                  ? "bg-brand-50 text-brand-700"
-                  : "text-ink-muted hover:bg-gray-100 hover:text-ink",
-              )}
-            >
-              {item.label}
-            </Link>
-          ))}
+          {mainNav.map((entry) =>
+            entry.children ? (
+              <div key={entry.label} className="group relative">
+                <button
+                  type="button"
+                  aria-haspopup="true"
+                  className={cn(
+                    "flex items-center gap-1 rounded-md px-3 py-2 text-sm font-medium transition-colors",
+                    groupActive(entry)
+                      ? "bg-brand-50 text-brand-700"
+                      : "text-ink-muted hover:bg-gray-100 hover:text-ink",
+                  )}
+                >
+                  {entry.label}
+                  <Chevron className="transition-transform group-hover:rotate-180" />
+                </button>
+                {/* Dropdown: shown on hover or keyboard focus within the group */}
+                <div className="invisible absolute right-0 top-full z-50 min-w-[220px] pt-2 opacity-0 transition-opacity group-hover:visible group-hover:opacity-100 group-focus-within:visible group-focus-within:opacity-100">
+                  <div className="overflow-hidden rounded-xl border border-gray-200 bg-white py-1.5 shadow-lg">
+                    {entry.children.map((child) => (
+                      <Link
+                        key={child.href}
+                        href={child.href}
+                        aria-current={isActive(child.href) ? "page" : undefined}
+                        className={cn(
+                          "block px-4 py-2 text-sm font-medium transition-colors",
+                          isActive(child.href)
+                            ? "bg-brand-50 text-brand-700"
+                            : "text-ink-soft hover:bg-gray-100 hover:text-ink",
+                        )}
+                      >
+                        {child.label}
+                      </Link>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            ) : (
+              <Link
+                key={entry.href}
+                href={entry.href!}
+                aria-current={isActive(entry.href!) ? "page" : undefined}
+                className={cn(
+                  "rounded-md px-3 py-2 text-sm font-medium transition-colors",
+                  isActive(entry.href!)
+                    ? "bg-brand-50 text-brand-700"
+                    : "text-ink-muted hover:bg-gray-100 hover:text-ink",
+                )}
+              >
+                {entry.label}
+              </Link>
+            ),
+          )}
         </nav>
 
         <div className="ml-auto flex items-center gap-2 lg:ml-2">
@@ -80,22 +130,57 @@ export function Header() {
                 <SearchBox />
               </Suspense>
             </div>
-            {mainNav.map((item) => (
-              <Link
-                key={item.href}
-                href={item.href}
-                onClick={() => setOpen(false)}
-                aria-current={isActive(item.href) ? "page" : undefined}
-                className={cn(
-                  "rounded-md px-3 py-2.5 text-sm font-medium",
-                  isActive(item.href)
-                    ? "bg-brand-50 text-brand-700"
-                    : "text-ink-muted hover:bg-gray-100",
-                )}
-              >
-                {item.label}
-              </Link>
-            ))}
+
+            {mainNav.map((entry) =>
+              entry.children ? (
+                <div key={entry.label}>
+                  <button
+                    type="button"
+                    onClick={() => setExpanded((v) => (v === entry.label ? null : entry.label))}
+                    aria-expanded={expanded === entry.label}
+                    className={cn(
+                      "flex w-full items-center justify-between rounded-md px-3 py-2.5 text-sm font-medium",
+                      groupActive(entry) ? "text-brand-700" : "text-ink-muted hover:bg-gray-100",
+                    )}
+                  >
+                    {entry.label}
+                    <Chevron className={cn("transition-transform", expanded === entry.label && "rotate-180")} />
+                  </button>
+                  {expanded === entry.label && (
+                    <div className="ml-3 flex flex-col border-l border-gray-200 pl-2">
+                      {entry.children.map((child) => (
+                        <Link
+                          key={child.href}
+                          href={child.href}
+                          onClick={() => setOpen(false)}
+                          aria-current={isActive(child.href) ? "page" : undefined}
+                          className={cn(
+                            "rounded-md px-3 py-2 text-sm font-medium",
+                            isActive(child.href) ? "bg-brand-50 text-brand-700" : "text-ink-muted hover:bg-gray-100",
+                          )}
+                        >
+                          {child.label}
+                        </Link>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              ) : (
+                <Link
+                  key={entry.href}
+                  href={entry.href!}
+                  onClick={() => setOpen(false)}
+                  aria-current={isActive(entry.href!) ? "page" : undefined}
+                  className={cn(
+                    "rounded-md px-3 py-2.5 text-sm font-medium",
+                    isActive(entry.href!) ? "bg-brand-50 text-brand-700" : "text-ink-muted hover:bg-gray-100",
+                  )}
+                >
+                  {entry.label}
+                </Link>
+              ),
+            )}
+
             <Link
               href="/login"
               onClick={() => setOpen(false)}

@@ -37,18 +37,37 @@ export const site = {
   ],
 } as const;
 
-export const mainNav = [
+export type NavLink = { label: string; href: string };
+export type NavEntry = { label: string; href?: string; children?: NavLink[] };
+
+export const mainNav: NavEntry[] = [
   { label: "Home", href: "/" },
   { label: "Rentals", href: "/rentals" },
-  { label: "Listings", href: "/listings" },
-  { label: "Agencies", href: "/agencies" },
-  { label: "Services", href: "/property-services" },
-  { label: "Manage My Property", href: "/property-management" },
-  { label: "Facility", href: "/facility-management" },
-  { label: "Advertise", href: "/advertise" },
-  { label: "Portfolio", href: "/properties" },
-  { label: "Contact", href: "/contact" },
-] as const;
+  {
+    label: "Marketplace",
+    children: [
+      { label: "Property Listings", href: "/listings" },
+      { label: "Agencies", href: "/agencies" },
+      { label: "Property Services", href: "/property-services" },
+    ],
+  },
+  {
+    label: "For Owners",
+    children: [
+      { label: "Manage My Property", href: "/property-management" },
+      { label: "Advertise Property", href: "/advertise" },
+      { label: "Facility Management", href: "/facility-management" },
+    ],
+  },
+  {
+    label: "Company",
+    children: [
+      { label: "Portfolio", href: "/properties" },
+      { label: "About Us", href: "/about" },
+      { label: "Contact", href: "/contact" },
+    ],
+  },
+];
 
 export const footerLinks = [
   { label: "Home", href: "/" },
