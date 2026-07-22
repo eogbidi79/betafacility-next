@@ -286,6 +286,25 @@ model Voucher {
   redeemedAt     DateTime?
 }
 
+/// Inbound B2B leads from the Property Management page (owners/investors
+/// asking Beta Facility to manage their property).
+model PropertyManagementLead {
+  id           String        @id @default(cuid())
+  reference    String        @unique
+  name         String
+  email        String
+  phone        String
+  company      String?
+  country      String        @default("Nigeria")
+  city         String?
+  propertyType String? // Residential | Commercial | Mixed-use | Short-let portfolio | Land
+  units        String? // free-text portfolio size, e.g. "1-5", "20+"
+  services     String? // comma-separated services of interest
+  message      String?
+  status       RequestStatus @default(NEW)
+  createdAt    DateTime      @default(now())
+}
+
 model ContactMessage {
   id          String   @id @default(cuid())
   name        String

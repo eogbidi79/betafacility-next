@@ -88,6 +88,20 @@ export const serviceRequestSchema = z.object({
 });
 export type ServiceRequestInput = z.infer<typeof serviceRequestSchema>;
 
+export const propertyManagementSchema = z.object({
+  name,
+  email,
+  phone,
+  company: z.string().trim().max(160).optional().or(z.literal("")),
+  country: z.string().trim().min(2).max(60).default("Nigeria"),
+  city: z.string().trim().max(80).optional().or(z.literal("")),
+  propertyType: z.string().trim().max(60).optional().or(z.literal("")),
+  units: z.string().trim().max(40).optional().or(z.literal("")),
+  services: z.string().trim().max(400).optional().or(z.literal("")),
+  message: z.string().trim().max(5000).optional().or(z.literal("")),
+});
+export type PropertyManagementInput = z.infer<typeof propertyManagementSchema>;
+
 export const cancelSchema = z.object({
   reason: z.string().trim().max(500).optional().or(z.literal("")),
 });

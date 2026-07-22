@@ -49,6 +49,18 @@ export async function setListingStatus(formData: FormData) {
   revalidatePath("/portal");
 }
 
+export async function setLeadStatus(formData: FormData) {
+  await requireAuth();
+  const id = String(formData.get("id") ?? "");
+  const status = String(formData.get("status") ?? "");
+  if (!id || !(status in RequestStatus)) return;
+  await prisma.propertyManagementLead.update({
+    where: { id },
+    data: { status: status as RequestStatus },
+  });
+  revalidatePath("/portal");
+}
+
 export async function setMaintenanceStatus(formData: FormData) {
   await requireAuth();
   const id = String(formData.get("id") ?? "");

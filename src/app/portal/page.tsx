@@ -7,7 +7,7 @@ import { SignOutButton } from "@/components/portal/SignOutButton";
 import { TenantDashboard } from "@/components/portal/TenantDashboard";
 import { AgentDashboard } from "@/components/portal/AgentDashboard";
 import { formatNaira } from "@/lib/utils";
-import { setListingStatus, setMaintenanceStatus, setTenancyStage } from "./actions";
+import { setListingStatus, setMaintenanceStatus, setTenancyStage, setLeadStatus } from "./actions";
 
 const MAINT_STATUSES = ["NEW", "IN_PROGRESS", "RESOLVED", "CLOSED"] as const;
 
@@ -37,7 +37,7 @@ export default async function PortalPage() {
 
   const isAdmin = role === "ADMIN";
 
-  const [tenancyApps, bookings, contacts, maintenance, adverts, counts] = await Promise.all([
+  const [tenancyApps, bookings, contacts, maintenance, adverts, pmLeads, counts] = await Promise.all([
     prisma.booking.findMany({
       where: { term: "long-term" },
       orderBy: { createdAt: "desc" },
@@ -47,6 +47,7 @@ export default async function PortalPage() {
     prisma.contactMessage.findMany({ orderBy: { createdAt: "desc" }, take: 8 }),
     prisma.maintenanceRequest.findMany({ orderBy: { createdAt: "desc" }, take: 8 }),
     prisma.advertiseSubmission.findMany({ orderBy: { createdAt: "desc" }, take: 8 }),
+    prisma.propertyManagementLead.findMany({ orderBy: { createdAt: "desc" }, take: 8 }),
     Promise.all([
       prisma.booking.count(),
       prisma.contactMessage.count(),
@@ -54,10 +55,11 @@ export default async function PortalPage() {
       prisma.advertiseSubmission.count(),
       prisma.organization.count(),
       prisma.serviceRequest.count(),
+      prisma.propertyManagementLead.count(),
     ]),
   ]);
 
-  const [bookingCount, contactCount, maintCount, advertCount, orgCount, serviceReqCount] = counts;
+  const [bookingCount, contactCount, maintCount, advertCount, orgCount, serviceReqCount, pmLeadCount] = counts;
   const revenue = bookings.reduce((s, b) => (b.status !== "PENDING" ? s + b.amount : s), 0);
 
   return (
@@ -110,6 +112,7 @@ export default async function PortalPage() {
         <Stat label="Listing submissions" value={String(advertCount)} />
         <Stat label="Organizations" value={String(orgCount)} />
         <Stat label="Service requests" value={String(serviceReqCount)} />
+        <Stat label="Management leads" value={String(pmLeadCount)} />
       </div>
 
       <Panel title="Tenancy applications (1-year)">
@@ -153,6 +156,57 @@ export default async function PortalPage() {
                 </li>
               );
             })}
+          </ul>
+        )}
+      </Panel>
+
+      <Panel title="Property management leads">
+        {pmLeads.length === 0 ? (
+          <Empty />
+        ) : (
+          <ul className="divide-y divide-gray-100">
+            {pmLeads.map((l) => (
+              <li key={l.id} className="flex flex-wrap items-center justify-between gap-3 py-3 text-sm">
+                <div className="min-w-[220px]">
+                  <p className="font-medium text-ink">
+                    {l.name}
+                    {l.company ? <span className="text-ink-muted"> · {l.company}</span> : null}
+                  </p>
+                  <p className="text-xs text-ink-muted tabular">
+                    {l.reference} · {l.email} · {l.phone} ·{" "}
+                    {[l.city, l.country].filter(Boolean).join(", ")} · {since(l.createdAt)}
+                  </p>
+                  <p className="mt-1 text-xs text-ink-soft">
+                    {[l.propertyType, l.units ? `${l.units} unit(s)` : null, l.services]
+                      .filter(Boolean)
+                      .join(" · ")}
+                  </p>
+                </div>
+                {isAdmin ? (
+                  <form action={setLeadStatus} className="flex items-center gap-1.5">
+                    <input type="hidden" name="id" value={l.id} />
+                    <select
+                      name="status"
+                      defaultValue={l.status}
+                      className="rounded-md border border-gray-300 bg-white px-2 py-1 text-xs text-ink"
+                    >
+                      {MAINT_STATUSES.map((s) => (
+                        <option key={s} value={s}>
+                          {s.replace("_", " ")}
+                        </option>
+                      ))}
+                    </select>
+                    <button className="rounded-md bg-ink px-2.5 py-1 text-xs font-semibold text-white hover:bg-ink-soft">
+                      Save
+                    </button>
+                  </form>
+                ) : (
+                  <Badge tone={l.status === "RESOLVED" || l.status === "CLOSED" ? "success" : "info"}>
+                    {l.status.replace("_", " ")}
+                  </Badge>
+                )}
+              </li>
+            ))}
           </ul>
         )}
       </Panel>
