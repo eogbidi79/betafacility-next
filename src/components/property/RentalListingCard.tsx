@@ -107,8 +107,8 @@ export function RentalListingCard({ listing }: { listing: ListingDTO }) {
             <span className="text-xl font-bold text-ink">{priceText}</span>
             {priceUnit && <span className="block text-xs text-ink-muted">{priceUnit}</span>}
           </div>
-          <ButtonLink href={`/contact?ref=${listing.id}`} size="sm">
-            Enquire
+          <ButtonLink href={`/rentals/${listing.id}`} size="sm">
+            View Details
           </ButtonLink>
         </div>
 

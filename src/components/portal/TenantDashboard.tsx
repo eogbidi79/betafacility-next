@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { prisma } from "@/lib/db";
 import { Container } from "@/components/ui/Container";
 import { Badge } from "@/components/ui/Badge";
@@ -41,7 +42,7 @@ export async function TenantDashboard({ email, name }: { email: string; name?: s
         <h2 className="text-lg font-bold text-ink">My bookings &amp; tenancies</h2>
         {bookings.length === 0 ? (
           <p className="py-3 text-sm text-ink-muted">
-            No bookings yet. <a href="/rentals" className="font-medium text-brand-600">Browse rentals →</a>
+            No bookings yet. <Link href="/rentals" className="font-medium text-brand-600">Browse rentals →</Link>
           </p>
         ) : (
           <ul className="mt-2 divide-y divide-gray-100">

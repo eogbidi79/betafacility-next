@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import dynamic from "next/dynamic";
 import { RentalListingCard } from "./RentalListingCard";
 import { Select, Input } from "@/components/ui/Field";
@@ -24,6 +24,7 @@ const RentalsMap = dynamic(() => import("./RentalsMap"), {
 });
 
 const ALL = "all";
+const PER_PAGE = 9;
 const price = (l: ListingDTO) => l.rentPerYear ?? l.price ?? 0;
 
 export function RentalsBrowser({ listings }: { listings: ListingDTO[] }) {
@@ -40,6 +41,7 @@ export function RentalsBrowser({ listings }: { listings: ListingDTO[] }) {
   const [furnished, setFurnished] = useState(false);
   const [parking, setParking] = useState(false);
   const [pet, setPet] = useState(false);
+  const [page, setPage] = useState(1);
 
   const regions = country !== ALL ? regionsOf(country) : [];
   const cities = country !== ALL && region !== ALL ? citiesOf(country, region) : [];
@@ -64,6 +66,13 @@ export function RentalsBrowser({ listings }: { listings: ListingDTO[] }) {
         (!pet || l.petFriendly),
     );
   }, [listings, country, region, city, category, propertyType, bedroom, availability, listedBy, minPrice, maxPrice, furnished, parking, pet]);
+
+  // Reset to page 1 whenever the result set changes.
+  useEffect(() => setPage(1), [filtered.length]);
+
+  const totalPages = Math.max(1, Math.ceil(filtered.length / PER_PAGE));
+  const pageSafe = Math.min(page, totalPages);
+  const pageItems = filtered.slice((pageSafe - 1) * PER_PAGE, pageSafe * PER_PAGE);
 
   const reset = () => {
     setCountry(ALL);
@@ -200,11 +209,43 @@ export function RentalsBrowser({ listings }: { listings: ListingDTO[] }) {
       </div>
 
       {filtered.length > 0 ? (
-        <div className="mt-8 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
-          {filtered.map((l) => (
-            <RentalListingCard key={l.id} listing={l} />
-          ))}
-        </div>
+        <>
+          <div className="mt-8 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+            {pageItems.map((l) => (
+              <RentalListingCard key={l.id} listing={l} />
+            ))}
+          </div>
+
+          {totalPages > 1 && (
+            <div className="mt-8 flex items-center justify-center gap-2">
+              <button
+                onClick={() => setPage((p) => Math.max(1, p - 1))}
+                disabled={pageSafe <= 1}
+                className="rounded-lg border border-gray-300 px-3 py-2 text-sm font-semibold text-ink disabled:opacity-40"
+              >
+                Previous
+              </button>
+              {Array.from({ length: totalPages }, (_, i) => i + 1).map((n) => (
+                <button
+                  key={n}
+                  onClick={() => setPage(n)}
+                  className={`h-9 w-9 rounded-lg text-sm font-semibold ${
+                    n === pageSafe ? "bg-brand-500 text-white" : "border border-gray-300 text-ink hover:border-ink"
+                  }`}
+                >
+                  {n}
+                </button>
+              ))}
+              <button
+                onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
+                disabled={pageSafe >= totalPages}
+                className="rounded-lg border border-gray-300 px-3 py-2 text-sm font-semibold text-ink disabled:opacity-40"
+              >
+                Next
+              </button>
+            </div>
+          )}
+        </>
       ) : (
         <p className="mt-12 text-center text-ink-muted">No rentals match your filters. Try widening your search.</p>
       )}
