@@ -5,6 +5,8 @@ import { revalidatePath } from "next/cache";
 import { auth } from "@/auth";
 import { prisma } from "@/lib/db";
 import { logAudit } from "@/lib/audit";
+import { meiliEnabled, reindexAll } from "@/lib/meilisearch";
+import { captureError } from "@/lib/observability";
 import {
   notifyTenancyUnderReview,
   notifyTenancyAccepted,
@@ -81,6 +83,19 @@ export async function setLeadStatus(formData: FormData) {
     data: { status: status as RequestStatus },
   });
   await logAudit({ actor, action: "lead.status", entity: "PropertyManagementLead", entityId: id, summary: `→ ${status}` });
+  revalidatePath("/portal");
+}
+
+export async function reindexSearch() {
+  const actor = await requireAuth();
+  if (!meiliEnabled()) return;
+  try {
+    const counts = await reindexAll();
+    const total = Object.values(counts).reduce((a, b) => a + b, 0);
+    await logAudit({ actor, action: "search.reindex", entity: "Meilisearch", summary: `${total} documents` });
+  } catch (err) {
+    captureError(err, { where: "reindexSearch" });
+  }
   revalidatePath("/portal");
 }
 

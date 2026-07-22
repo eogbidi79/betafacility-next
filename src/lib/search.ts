@@ -1,6 +1,8 @@
 import { prisma } from "@/lib/db";
 import { formatMoney } from "@/lib/currency";
 import { formatNaira } from "@/lib/utils";
+import { meiliEnabled, meiliSearch } from "@/lib/meilisearch";
+import { captureError } from "@/lib/observability";
 
 export type SearchHit = {
   id: string;
@@ -16,18 +18,37 @@ export type SearchGroup = {
   hits: SearchHit[];
 };
 
+export const GROUP_LABELS: Record<SearchGroup["key"], string> = {
+  rentals: "Rentals",
+  listings: "Marketplace listings",
+  services: "Property services",
+  agencies: "Agencies",
+};
+
 const PER_GROUP = 6;
 
 /**
  * Unified site search across rentals, marketplace listings, services and
- * agencies. Backed by Postgres `contains` queries today; the grouped shape is
- * intentionally source-agnostic so it can be swapped for Meilisearch/Typesense
- * later without changing callers.
+ * agencies. Uses Meilisearch when configured (typo-tolerant, ranked) and
+ * transparently falls back to Postgres `contains` queries otherwise — or if a
+ * Meilisearch call fails — so search always works.
  */
 export async function searchAll(query: string): Promise<SearchGroup[]> {
   const q = query.trim();
   if (q.length < 2) return [];
 
+  if (meiliEnabled()) {
+    try {
+      return await meiliSearch(q, PER_GROUP);
+    } catch (err) {
+      captureError(err, { where: "meiliSearch", query: q });
+      // fall through to DB search
+    }
+  }
+  return dbSearch(q);
+}
+
+async function dbSearch(q: string): Promise<SearchGroup[]> {
   const like = { contains: q, mode: "insensitive" as const };
 
   const [rentals, listings, services, agencies] = await Promise.all([

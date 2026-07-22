@@ -7,7 +7,8 @@ import { SignOutButton } from "@/components/portal/SignOutButton";
 import { TenantDashboard } from "@/components/portal/TenantDashboard";
 import { AgentDashboard } from "@/components/portal/AgentDashboard";
 import { formatNaira } from "@/lib/utils";
-import { setListingStatus, setListingFeatured, setMaintenanceStatus, setTenancyStage, setLeadStatus } from "./actions";
+import { meiliEnabled } from "@/lib/meilisearch";
+import { setListingStatus, setListingFeatured, setMaintenanceStatus, setTenancyStage, setLeadStatus, reindexSearch } from "./actions";
 
 const MAINT_STATUSES = ["NEW", "IN_PROGRESS", "RESOLVED", "CLOSED"] as const;
 
@@ -100,6 +101,16 @@ export default async function PortalPage() {
             <ButtonLink href="/portal/audit" size="sm" variant="outline">
               Audit Log
             </ButtonLink>
+          )}
+          {isAdmin && meiliEnabled() && (
+            <form action={reindexSearch}>
+              <button
+                type="submit"
+                className="rounded-lg border border-gray-300 bg-white px-3.5 py-2 text-sm font-semibold text-ink hover:border-ink"
+              >
+                Reindex Search
+              </button>
+            </form>
           )}
           <SignOutButton />
         </div>
