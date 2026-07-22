@@ -3,10 +3,15 @@ import { propertyManagementSchema } from "@/lib/validation";
 import { parseJson, ok, serverError } from "@/lib/api";
 import { makeReference } from "@/lib/reference";
 import { sendEmail, emailLayout, notifyTo } from "@/lib/email";
+import { rateLimit } from "@/lib/rate-limit";
+import { captureError } from "@/lib/observability";
 
 export const runtime = "nodejs";
 
 export async function POST(req: Request) {
+  const limited = rateLimit(req, "property-management", { limit: 5, windowMs: 60_000 });
+  if (limited) return limited;
+
   const parsed = await parseJson(req, propertyManagementSchema);
   if (!parsed.ok) return parsed.response;
 
@@ -48,7 +53,7 @@ export async function POST(req: Request) {
 
     return ok({ reference: lead.reference, message: "Lead submitted" }, 201);
   } catch (err) {
-    console.error("property-management POST failed", err);
+    captureError(err, { route: "property-management" });
     return serverError();
   }
 }

@@ -35,7 +35,7 @@ export default async function ListingsPage({
       status: "APPROVED",
       ...(active !== "ALL" ? { transactionType: active } : {}),
     },
-    orderBy: { createdAt: "desc" },
+    orderBy: [{ featured: "desc" }, { createdAt: "desc" }],
   });
 
   return (

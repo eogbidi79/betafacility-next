@@ -17,7 +17,7 @@ export const metadata = pageMetadata({
 export default async function RentalsPage() {
   const rows = await prisma.rentalListing.findMany({
     where: { active: true },
-    orderBy: [{ rentalCategory: "asc" }, { createdAt: "asc" }],
+    orderBy: [{ featured: "desc" }, { rentalCategory: "asc" }, { createdAt: "asc" }],
   });
   const listings = rows.map(toDTO);
 

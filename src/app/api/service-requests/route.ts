@@ -3,10 +3,15 @@ import { serviceRequestSchema } from "@/lib/validation";
 import { parseJson, ok, serverError } from "@/lib/api";
 import { makeReference } from "@/lib/reference";
 import { sendEmail, emailLayout, notifyTo } from "@/lib/email";
+import { rateLimit } from "@/lib/rate-limit";
+import { captureError } from "@/lib/observability";
 
 export const runtime = "nodejs";
 
 export async function POST(req: Request) {
+  const limited = rateLimit(req, "service-request", { limit: 5, windowMs: 60_000 });
+  if (limited) return limited;
+
   const parsed = await parseJson(req, serviceRequestSchema);
   if (!parsed.ok) return parsed.response;
 
@@ -56,7 +61,7 @@ export async function POST(req: Request) {
 
     return ok({ reference: request.reference, message: "Request submitted" }, 201);
   } catch (err) {
-    console.error("service-request POST failed", err);
+    captureError(err, { route: "service-request" });
     return serverError();
   }
 }

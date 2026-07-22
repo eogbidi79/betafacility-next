@@ -5,6 +5,7 @@ import { Role } from "@prisma/client";
 import { revalidatePath } from "next/cache";
 import { auth } from "@/auth";
 import { prisma } from "@/lib/db";
+import { logAudit } from "@/lib/audit";
 
 async function requireAdmin() {
   const session = await auth();
@@ -17,7 +18,7 @@ function isRole(value: string): value is Role {
 }
 
 export async function createUser(formData: FormData) {
-  await requireAdmin();
+  const session = await requireAdmin();
   const email = String(formData.get("email") ?? "").trim().toLowerCase();
   const name = String(formData.get("name") ?? "").trim() || null;
   const role = String(formData.get("role") ?? "");
@@ -30,25 +31,33 @@ export async function createUser(formData: FormData) {
     update: { name, role, passwordHash },
     create: { email, name, role, passwordHash },
   });
+  await logAudit({
+    actor: session.user?.email ?? "system",
+    action: "user.upsert",
+    entity: "User",
+    summary: `${email} (${role})`,
+  });
   revalidatePath("/portal/users");
 }
 
 export async function setUserRole(formData: FormData) {
-  await requireAdmin();
+  const session = await requireAdmin();
   const id = String(formData.get("id") ?? "");
   const role = String(formData.get("role") ?? "");
   if (!id || !isRole(role)) return;
   await prisma.user.update({ where: { id }, data: { role } });
+  await logAudit({ actor: session.user?.email ?? "system", action: "user.role", entity: "User", entityId: id, summary: `→ ${role}` });
   revalidatePath("/portal/users");
 }
 
 export async function resetUserPassword(formData: FormData) {
-  await requireAdmin();
+  const session = await requireAdmin();
   const id = String(formData.get("id") ?? "");
   const password = String(formData.get("password") ?? "");
   if (!id || password.length < 6) return;
   const passwordHash = await bcrypt.hash(password, 10);
   await prisma.user.update({ where: { id }, data: { passwordHash } });
+  await logAudit({ actor: session.user?.email ?? "system", action: "user.password", entity: "User", entityId: id });
   revalidatePath("/portal/users");
 }
 
@@ -67,5 +76,6 @@ export async function deleteUser(formData: FormData) {
     if (adminCount <= 1) return;
   }
   await prisma.user.delete({ where: { id } });
+  await logAudit({ actor: session.user?.email ?? "system", action: "user.delete", entity: "User", entityId: id, summary: target.email });
   revalidatePath("/portal/users");
 }

@@ -34,8 +34,9 @@ export function ListingCard({ listing }: { listing: AdvertiseSubmission }) {
             <span className="text-4xl font-extrabold">Beta</span>
           </div>
         )}
-        <div className="absolute left-3 top-3">
+        <div className="absolute left-3 top-3 flex flex-wrap gap-2">
           <Badge tone="brand">{label}</Badge>
+          {listing.featured && <Badge tone="success">★ Featured</Badge>}
         </div>
       </div>
 

@@ -4,6 +4,7 @@ import Script from "next/script";
 import "./globals.css";
 import { Header } from "@/components/layout/Header";
 import { Footer } from "@/components/layout/Footer";
+import { Analytics } from "@/components/analytics/Analytics";
 import { site } from "@/data/site";
 
 const outfit = Outfit({
@@ -90,6 +91,7 @@ export default function RootLayout({
           type="application/ld+json"
           dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
         />
+        <Analytics />
         <Header />
         <main className="flex-1">{children}</main>
         <Footer />

@@ -2,6 +2,8 @@ import { prisma } from "@/lib/db";
 import { contactSchema } from "@/lib/validation";
 import { parseJson, ok, serverError } from "@/lib/api";
 import { sendEmail, emailLayout, notifyTo } from "@/lib/email";
+import { rateLimit } from "@/lib/rate-limit";
+import { captureError } from "@/lib/observability";
 
 export const runtime = "nodejs";
 
@@ -12,6 +14,9 @@ function contactRecipient(inquiryType: string): string {
 }
 
 export async function POST(req: Request) {
+  const limited = rateLimit(req, "contact", { limit: 5, windowMs: 60_000 });
+  if (limited) return limited;
+
   const parsed = await parseJson(req, contactSchema);
   if (!parsed.ok) return parsed.response;
 
@@ -39,7 +44,7 @@ export async function POST(req: Request) {
     });
     return ok({ id: msg.id, message: "Message received" }, 201);
   } catch (err) {
-    console.error("contact POST failed", err);
+    captureError(err, { route: "contact" });
     return serverError();
   }
 }

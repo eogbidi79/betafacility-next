@@ -34,6 +34,7 @@ export type ListingDTO = {
   photos: Photos;
   description: string | null;
   listedBy: string;
+  featured: boolean;
   latitude: number | null;
   longitude: number | null;
 };
@@ -100,6 +101,7 @@ export function toDTO(l: RentalListing): ListingDTO {
     photos: parsePhotos(l.photos),
     description: l.description,
     listedBy: l.listedBy,
+    featured: l.featured,
     latitude: l.latitude,
     longitude: l.longitude,
   };

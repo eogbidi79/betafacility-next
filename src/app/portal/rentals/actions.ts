@@ -3,10 +3,12 @@
 import { revalidatePath } from "next/cache";
 import { auth } from "@/auth";
 import { prisma } from "@/lib/db";
+import { logAudit } from "@/lib/audit";
 
-async function requireAdmin() {
+async function requireAdmin(): Promise<string> {
   const session = await auth();
   if (session?.user?.role !== "ADMIN") throw new Error("Forbidden");
+  return session.user.email ?? "system";
 }
 
 const lines = (v: FormDataEntryValue | null) =>
@@ -59,6 +61,7 @@ function collect(fd: FormData) {
     }),
     description: String(fd.get("description") ?? "").trim() || null,
     listedBy: String(fd.get("listedBy") ?? "Beta Facility"),
+    featured: Boolean(fd.get("featured")),
     latitude: num(fd.get("latitude")),
     longitude: num(fd.get("longitude")),
   };
@@ -71,34 +74,48 @@ function revalidate() {
 }
 
 export async function createListing(fd: FormData) {
-  await requireAdmin();
+  const actor = await requireAdmin();
   const data = collect(fd);
   if (!data.title) return;
-  await prisma.rentalListing.create({ data });
+  const created = await prisma.rentalListing.create({ data });
+  await logAudit({ actor, action: "rental.create", entity: "RentalListing", entityId: created.id, summary: data.title });
   revalidate();
 }
 
 export async function updateListing(fd: FormData) {
-  await requireAdmin();
+  const actor = await requireAdmin();
   const id = String(fd.get("id") ?? "");
   if (!id) return;
   await prisma.rentalListing.update({ where: { id }, data: collect(fd) });
+  await logAudit({ actor, action: "rental.update", entity: "RentalListing", entityId: id });
   revalidate();
 }
 
 export async function setAvailability(fd: FormData) {
-  await requireAdmin();
+  const actor = await requireAdmin();
   const id = String(fd.get("id") ?? "");
   const availableUnits = num(fd.get("availableUnits")) ?? 0;
   if (!id) return;
   await prisma.rentalListing.update({ where: { id }, data: { availableUnits } });
+  await logAudit({ actor, action: "rental.availability", entity: "RentalListing", entityId: id, summary: `${availableUnits} available` });
+  revalidate();
+}
+
+export async function setRentalFeatured(fd: FormData) {
+  const actor = await requireAdmin();
+  const id = String(fd.get("id") ?? "");
+  const featured = String(fd.get("featured") ?? "") === "true";
+  if (!id) return;
+  await prisma.rentalListing.update({ where: { id }, data: { featured } });
+  await logAudit({ actor, action: "rental.featured", entity: "RentalListing", entityId: id, summary: featured ? "featured" : "unfeatured" });
   revalidate();
 }
 
 export async function deleteListing(fd: FormData) {
-  await requireAdmin();
+  const actor = await requireAdmin();
   const id = String(fd.get("id") ?? "");
   if (!id) return;
   await prisma.rentalListing.delete({ where: { id } });
+  await logAudit({ actor, action: "rental.delete", entity: "RentalListing", entityId: id });
   revalidate();
 }

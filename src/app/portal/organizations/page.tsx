@@ -11,8 +11,11 @@ import {
   createOrganization,
   setOrgVerified,
   setOrgActive,
+  setOrgPlan,
   deleteOrganization,
 } from "./actions";
+
+const PLANS = ["Free", "Basic", "Pro"] as const;
 
 export const dynamic = "force-dynamic";
 export const metadata = { title: "Manage Organizations", robots: { index: false } };
@@ -144,11 +147,28 @@ export default async function OrganizationsPage() {
                     <td className="py-3">{ORG_KIND_LABEL[o.kind] ?? o.kind}</td>
                     <td className="py-3 text-ink-soft">{orgLocation(o) || "—"}</td>
                     <td className="py-3">
-                      <div className="flex flex-wrap gap-1">
+                      <div className="flex flex-wrap items-center gap-1">
                         <Badge tone={o.verified ? "success" : "neutral"}>
                           {o.verified ? "Verified" : "Unverified"}
                         </Badge>
                         <Badge tone={o.active ? "info" : "neutral"}>{o.active ? "Active" : "Hidden"}</Badge>
+                        <form action={setOrgPlan} className="flex items-center gap-1">
+                          <input type="hidden" name="id" value={o.id} />
+                          <select
+                            name="plan"
+                            defaultValue={o.subscriptionPlan}
+                            className="rounded-md border border-gray-300 bg-white px-1.5 py-0.5 text-xs text-ink"
+                          >
+                            {PLANS.map((p) => (
+                              <option key={p} value={p}>
+                                {p}
+                              </option>
+                            ))}
+                          </select>
+                          <button className="rounded-md bg-ink px-2 py-0.5 text-xs font-semibold text-white hover:bg-ink-soft">
+                            Set
+                          </button>
+                        </form>
                       </div>
                     </td>
                     <td className="py-3 text-ink-muted">{since(o.createdAt)}</td>

@@ -7,7 +7,7 @@ import { SignOutButton } from "@/components/portal/SignOutButton";
 import { TenantDashboard } from "@/components/portal/TenantDashboard";
 import { AgentDashboard } from "@/components/portal/AgentDashboard";
 import { formatNaira } from "@/lib/utils";
-import { setListingStatus, setMaintenanceStatus, setTenancyStage, setLeadStatus } from "./actions";
+import { setListingStatus, setListingFeatured, setMaintenanceStatus, setTenancyStage, setLeadStatus } from "./actions";
 
 const MAINT_STATUSES = ["NEW", "IN_PROGRESS", "RESOLVED", "CLOSED"] as const;
 
@@ -94,6 +94,11 @@ export default async function PortalPage() {
           {isAdmin && (
             <ButtonLink href="/portal/users" size="sm" variant="outline">
               Manage Users
+            </ButtonLink>
+          )}
+          {isAdmin && (
+            <ButtonLink href="/portal/audit" size="sm" variant="outline">
+              Audit Log
             </ButtonLink>
           )}
           <SignOutButton />
@@ -309,6 +314,7 @@ export default async function PortalPage() {
                   </div>
                   <div className="flex items-center gap-3">
                     <span className="font-semibold text-ink">{formatNaira(a.price)}</span>
+                    {a.featured && <Badge tone="success">★ Featured</Badge>}
                     <Badge tone={a.status === "APPROVED" ? "success" : a.status === "REJECTED" ? "neutral" : "brand"}>
                       {a.status}
                     </Badge>
@@ -334,6 +340,16 @@ export default async function PortalPage() {
                             className="rounded-md border border-gray-300 px-2 py-1 text-xs font-semibold text-ink-soft hover:border-ink disabled:opacity-40"
                           >
                             Reject
+                          </button>
+                        </form>
+                        <form action={setListingFeatured}>
+                          <input type="hidden" name="id" value={a.id} />
+                          <input type="hidden" name="featured" value={String(!a.featured)} />
+                          <button
+                            type="submit"
+                            className="rounded-md border border-amber-300 px-2 py-1 text-xs font-semibold text-amber-700 hover:bg-amber-50"
+                          >
+                            {a.featured ? "Unfeature" : "Feature"}
                           </button>
                         </form>
                       </div>

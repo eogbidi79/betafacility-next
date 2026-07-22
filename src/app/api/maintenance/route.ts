@@ -3,10 +3,15 @@ import { maintenanceSchema } from "@/lib/validation";
 import { parseJson, ok, serverError } from "@/lib/api";
 import { makeReference } from "@/lib/reference";
 import { sendEmail, emailLayout, notifyTo } from "@/lib/email";
+import { rateLimit } from "@/lib/rate-limit";
+import { captureError } from "@/lib/observability";
 
 export const runtime = "nodejs";
 
 export async function POST(req: Request) {
+  const limited = rateLimit(req, "maintenance", { limit: 6, windowMs: 60_000 });
+  if (limited) return limited;
+
   const parsed = await parseJson(req, maintenanceSchema);
   if (!parsed.ok) return parsed.response;
 
@@ -50,7 +55,7 @@ export async function POST(req: Request) {
       201,
     );
   } catch (err) {
-    console.error("maintenance POST failed", err);
+    captureError(err, { route: "maintenance" });
     return serverError();
   }
 }

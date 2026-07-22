@@ -6,11 +6,16 @@ import { sendEmail, emailLayout, notifyTo } from "@/lib/email";
 import { formatNaira } from "@/lib/utils";
 import { computeNights, PENDING_HOLD_MS } from "@/lib/booking";
 import { notifyShortBookingReceived } from "@/lib/notifications";
+import { rateLimit } from "@/lib/rate-limit";
+import { captureError } from "@/lib/observability";
 import { NextResponse } from "next/server";
 
 export const runtime = "nodejs";
 
 export async function POST(req: Request) {
+  const limited = rateLimit(req, "booking", { limit: 8, windowMs: 60_000 });
+  if (limited) return limited;
+
   const parsed = await parseJson(req, bookingSchema);
   if (!parsed.ok) return parsed.response;
 
@@ -118,7 +123,7 @@ export async function POST(req: Request) {
       201,
     );
   } catch (err) {
-    console.error("booking POST failed", err);
+    captureError(err, { route: "booking" });
     return serverError();
   }
 }

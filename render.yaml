@@ -54,6 +54,15 @@ services:
       # --- Maps (optional: Mapbox tiles; falls back to OpenStreetMap) ---
       - key: NEXT_PUBLIC_MAPBOX_TOKEN
         sync: false
+      # --- Observability & analytics (all optional; no key = disabled) ---
+      - key: NEXT_PUBLIC_GA_ID
+        sync: false
+      - key: NEXT_PUBLIC_POSTHOG_KEY
+        sync: false
+      - key: NEXT_PUBLIC_POSTHOG_HOST
+        sync: false
+      - key: SENTRY_DSN
+        sync: false
       # --- Email (Resend) ---
       - key: RESEND_API_KEY
         sync: false

@@ -169,6 +169,7 @@ model AdvertiseSubmission {
   description     String
   imageUrl        String?
   imageCount      Int           @default(0)
+  featured        Boolean       @default(false)
   // Displayed publicly only after an admin APPROVES it.
   status          ListingStatus @default(PENDING)
   createdAt       DateTime      @default(now())
@@ -201,6 +202,7 @@ model RentalListing {
   photos         String   @default("{}") // JSON { livingRoom, bedroom, toiletBathroom, kitchen, building: string[] }
   description    String?
   listedBy       String   @default("Beta Facility") // "Beta Facility" | "Agency" | "Individual"
+  featured       Boolean  @default(false)
   latitude       Float?
   longitude      Float?
   active         Boolean  @default(true)
@@ -228,6 +230,8 @@ model Organization {
   userEmail   String?
   verified    Boolean  @default(false)
   active      Boolean  @default(true)
+  // Monetisation: subscription tier (Free | Basic | Pro). Config, not rebuild.
+  subscriptionPlan String @default("Free")
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
@@ -303,6 +307,20 @@ model PropertyManagementLead {
   message      String?
   status       RequestStatus @default(NEW)
   createdAt    DateTime      @default(now())
+}
+
+/// Immutable trail of admin/staff actions for accountability.
+model AuditLog {
+  id        String   @id @default(cuid())
+  actor     String // email of the signed-in user who acted
+  action    String // e.g. "listing.approve", "org.verify", "user.role"
+  entity    String // model name, e.g. "AdvertiseSubmission"
+  entityId  String?
+  summary   String?
+  createdAt DateTime @default(now())
+
+  @@index([createdAt])
+  @@index([actor])
 }
 
 model ContactMessage {

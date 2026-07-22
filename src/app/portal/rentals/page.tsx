@@ -9,7 +9,7 @@ import { Field, Input, Select, Textarea } from "@/components/ui/Field";
 import { PhotoUploader } from "@/components/portal/PhotoUploader";
 import { formatMoney } from "@/lib/currency";
 import { COUNTRY_NAMES, PROPERTY_TYPES, BEDROOM_TYPES, RENTAL_CATEGORIES, RENTAL_STATUSES, LISTED_BY, CURRENCIES } from "@/data/locations";
-import { createListing, updateListing, deleteListing, setAvailability } from "./actions";
+import { createListing, updateListing, deleteListing, setAvailability, setRentalFeatured } from "./actions";
 
 export const dynamic = "force-dynamic";
 export const metadata = { title: "Manage Rentals", robots: { index: false } };
@@ -95,6 +95,9 @@ function Fields({ l }: { l?: ListingDTO }) {
         <label className="flex items-center gap-1.5 text-sm text-ink-soft">
           <input type="checkbox" name="petFriendly" defaultChecked={l?.petFriendly} className="h-4 w-4 rounded border-gray-300 text-brand-500" /> Pet friendly
         </label>
+        <label className="flex items-center gap-1.5 text-sm text-ink-soft">
+          <input type="checkbox" name="featured" defaultChecked={l?.featured} className="h-4 w-4 rounded border-gray-300 text-brand-500" /> Featured
+        </label>
       </div>
       <Field label="Latitude (optional)" htmlFor="latitude">
         <Input name="latitude" defaultValue={l?.latitude ?? ""} placeholder="6.4698" />
@@ -166,6 +169,14 @@ export default async function ManageRentalsPage() {
                 <Badge tone={l.status === "Available" ? "success" : l.status === "Coming Soon" ? "brand" : "neutral"}>
                   {l.status}
                 </Badge>
+                {l.featured && <Badge tone="success">★ Featured</Badge>}
+                <form action={setRentalFeatured}>
+                  <input type="hidden" name="id" value={l.id} />
+                  <input type="hidden" name="featured" value={String(!l.featured)} />
+                  <button className="rounded-md border border-amber-300 px-2 py-1 text-xs font-semibold text-amber-700 hover:bg-amber-50">
+                    {l.featured ? "Unfeature" : "Feature"}
+                  </button>
+                </form>
                 {/* Quick availability update */}
                 <form action={setAvailability} className="flex items-center gap-1.5">
                   <input type="hidden" name="id" value={l.id} />

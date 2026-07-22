@@ -56,6 +56,7 @@ export function RentalListingCard({ listing }: { listing: ListingDTO }) {
         <div className="absolute left-3 top-3 flex flex-wrap gap-2">
           <Badge tone={statusTone(listing.status)}>{listing.status}</Badge>
           <Badge tone="brand">{listing.rentalCategory}</Badge>
+          {listing.featured && <Badge tone="success">★ Featured</Badge>}
         </div>
       </div>
 
