@@ -205,7 +205,8 @@ export function RentalsBrowser({ listings }: { listings: ListingDTO[] }) {
       </div>
 
       <div className="mt-6 h-80 overflow-hidden rounded-2xl border border-gray-200 shadow-card sm:h-96">
-        <RentalsMap listings={filtered} world />
+        {/* Global coverage view by default; zoom to results once a location filter is set. */}
+        <RentalsMap listings={filtered} world={country === ALL && region === ALL && city === ALL} />
       </div>
 
       {filtered.length > 0 ? (
