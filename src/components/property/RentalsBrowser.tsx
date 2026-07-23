@@ -205,7 +205,7 @@ export function RentalsBrowser({ listings }: { listings: ListingDTO[] }) {
       </div>
 
       <div className="mt-6 h-80 overflow-hidden rounded-2xl border border-gray-200 shadow-card sm:h-96">
-        <RentalsMap listings={filtered} />
+        <RentalsMap listings={filtered} world />
       </div>
 
       {filtered.length > 0 ? (

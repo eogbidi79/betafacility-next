@@ -1,6 +1,7 @@
 "use client";
 
-import { MapContainer, TileLayer, Marker, Popup } from "react-leaflet";
+import { useEffect } from "react";
+import { MapContainer, TileLayer, Marker, Popup, Tooltip, useMap } from "react-leaflet";
 import L from "leaflet";
 import "leaflet/dist/leaflet.css";
 import type { ListingDTO } from "@/lib/listings";
@@ -12,6 +13,22 @@ const pin = L.divIcon({
   iconSize: [18, 18],
   iconAnchor: [9, 9],
 });
+
+// Larger ringed pin for country-level coverage markers.
+const coveragePin = L.divIcon({
+  className: "",
+  html: `<div style="width:24px;height:24px;border-radius:50%;background:rgba(255,117,31,.25);border:2px solid #ff751f;display:flex;align-items:center;justify-content:center"><div style="width:9px;height:9px;border-radius:50%;background:#ff751f"></div></div>`,
+  iconSize: [24, 24],
+  iconAnchor: [12, 12],
+});
+
+// Countries Beta Facility operates in — shown as a world-view coverage map
+// when there are no specific listings plotted.
+const COVERAGE: { name: string; pos: [number, number] }[] = [
+  { name: "Canada", pos: [56.1304, -106.3468] },
+  { name: "United Kingdom", pos: [54.0, -2.4] },
+  { name: "Nigeria", pos: [9.082, 8.6753] },
+];
 
 function coords(l: ListingDTO): [number, number] | null {
   if (l.latitude != null && l.longitude != null) return [l.latitude, l.longitude];
@@ -41,17 +58,48 @@ const tiles = MAPBOX_TOKEN
       zoomOffset: 0,
     };
 
-export default function RentalsMap({ listings }: { listings: ListingDTO[] }) {
+// Imperatively fit the map to the given points after mount/updates.
+function FitBounds({ points }: { points: [number, number][] }) {
+  const map = useMap();
+  useEffect(() => {
+    if (points.length === 0) return;
+    if (points.length === 1) {
+      map.setView(points[0], 12);
+      return;
+    }
+    map.fitBounds(L.latLngBounds(points), { padding: [40, 40] });
+  }, [map, points]);
+  return null;
+}
+
+export default function RentalsMap({
+  listings,
+  world = false,
+}: {
+  listings: ListingDTO[];
+  world?: boolean;
+}) {
   const pts = listings
     .map((l) => ({ l, pos: coords(l) }))
     .filter((x): x is { l: ListingDTO; pos: [number, number] } => x.pos !== null);
 
-  const center: [number, number] = pts[0]?.pos ?? [9.082, 8.6753]; // Nigeria centroid fallback
+  // `world`: always show the global coverage view (Canada, UK, Nigeria) with any
+  // listings plotted on top. Otherwise (e.g. a single property page) zoom to the
+  // listing(s), falling back to the coverage view when there's nothing to plot.
+  const showCoverage = world || pts.length === 0;
+  const coveragePts = COVERAGE.map((c) => c.pos);
+  const fitPoints: [number, number][] = world
+    ? [...coveragePts, ...pts.map((p) => p.pos)]
+    : pts.length
+      ? pts.map((p) => p.pos)
+      : coveragePts;
 
   return (
     <MapContainer
-      center={center}
-      zoom={pts.length ? 12 : 6}
+      center={[30, -20]}
+      zoom={2}
+      minZoom={2}
+      worldCopyJump
       scrollWheelZoom={false}
       style={{ height: "100%", width: "100%" }}
     >
@@ -61,13 +109,25 @@ export default function RentalsMap({ listings }: { listings: ListingDTO[] }) {
         tileSize={tiles.tileSize}
         zoomOffset={tiles.zoomOffset}
       />
+
+      <FitBounds points={fitPoints} />
+
+      {showCoverage &&
+        COVERAGE.map((c) => (
+          <Marker key={c.name} position={c.pos} icon={coveragePin}>
+            <Tooltip permanent direction="top" offset={[0, -10]} className="bf-coverage-label">
+              {c.name}
+            </Tooltip>
+            <Popup>
+              <strong>{c.name}</strong>
+              <br />
+              Beta Facility operating region
+            </Popup>
+          </Marker>
+        ))}
+
       {pts.map(({ l, pos }) => (
-        <Marker
-          key={l.id}
-          position={pos}
-          icon={pin}
-          eventHandlers={{ click: () => scrollTo(l.id) }}
-        >
+        <Marker key={l.id} position={pos} icon={pin} eventHandlers={{ click: () => scrollTo(l.id) }}>
           <Popup>
             <strong>{l.title}</strong>
             <br />
