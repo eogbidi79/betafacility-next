@@ -1,8 +1,8 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import dynamic from "next/dynamic";
 import { RentalListingCard } from "./RentalListingCard";
+import { MapEmbed } from "@/components/map/MapEmbed";
 import { Select, Input } from "@/components/ui/Field";
 import type { ListingDTO } from "@/lib/listings";
 import {
@@ -15,13 +15,6 @@ import {
   RENTAL_STATUSES,
   LISTED_BY,
 } from "@/data/locations";
-
-const RentalsMap = dynamic(() => import("@/components/map/RentalsMap"), {
-  ssr: false,
-  loading: () => (
-    <div className="flex h-full items-center justify-center bg-gray-100 text-sm text-ink-muted">Loading map…</div>
-  ),
-});
 
 const ALL = "all";
 const PER_PAGE = 9;
@@ -205,8 +198,8 @@ export function RentalsBrowser({ listings }: { listings: ListingDTO[] }) {
       </div>
 
       <div className="mt-6 h-80 overflow-hidden rounded-2xl border border-gray-200 shadow-card sm:h-96">
-        {/* Global coverage view by default; zoom to results once a location filter is set. */}
-        <RentalsMap listings={filtered} world={country === ALL && region === ALL && city === ALL} />
+        {/* Mapbox when configured (clusters, auto-fit); else Leaflet coverage view. */}
+        <MapEmbed listings={filtered} world={country === ALL && region === ALL && city === ALL} />
       </div>
 
       {filtered.length > 0 ? (
