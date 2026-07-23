@@ -99,6 +99,16 @@ export async function reindexSearch() {
   revalidatePath("/portal");
 }
 
+export async function setInquiryHandled(formData: FormData) {
+  const actor = await requireSuperAdmin();
+  const id = String(formData.get("id") ?? "");
+  const handled = String(formData.get("handled") ?? "") === "true";
+  if (!id) return;
+  await prisma.contactMessage.update({ where: { id }, data: { handled } });
+  await logAudit({ actor: actor.email, action: "inquiry.handled", entity: "ContactMessage", entityId: id, summary: handled ? "handled" : "reopened" });
+  revalidatePath("/portal/inquiries");
+}
+
 export async function setMaintenanceStatus(formData: FormData) {
   // Maintenance requests carry no country; keep as a super-admin action.
   const actor = await requireSuperAdmin();

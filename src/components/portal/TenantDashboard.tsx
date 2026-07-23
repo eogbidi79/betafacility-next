@@ -3,7 +3,6 @@ import { prisma } from "@/lib/db";
 import { Container } from "@/components/ui/Container";
 import { Badge } from "@/components/ui/Badge";
 import { ButtonLink } from "@/components/ui/Button";
-import { SignOutButton } from "@/components/portal/SignOutButton";
 import { formatNaira } from "@/lib/utils";
 
 function when(d: Date) {
@@ -24,13 +23,10 @@ export async function TenantDashboard({ email, name }: { email: string; name?: s
   ]);
 
   return (
-    <Container className="py-10 sm:py-14">
-      <div className="flex flex-wrap items-center justify-between gap-4">
-        <div>
-          <h1 className="text-2xl font-bold text-ink">My Account</h1>
-          <p className="text-sm text-ink-muted">Welcome{name ? `, ${name}` : ""} · {email}</p>
-        </div>
-        <SignOutButton />
+    <Container className="py-8 sm:py-10">
+      <div>
+        <h1 className="text-2xl font-bold text-ink">My Account</h1>
+        <p className="text-sm text-ink-muted">Welcome{name ? `, ${name}` : ""}</p>
       </div>
 
       <div className="mt-6 flex flex-wrap gap-3">

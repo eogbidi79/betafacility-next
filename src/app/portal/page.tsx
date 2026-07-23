@@ -2,8 +2,6 @@ import { auth } from "@/auth";
 import { prisma } from "@/lib/db";
 import { Container } from "@/components/ui/Container";
 import { Badge } from "@/components/ui/Badge";
-import { ButtonLink } from "@/components/ui/Button";
-import { SignOutButton } from "@/components/portal/SignOutButton";
 import { TenantDashboard } from "@/components/portal/TenantDashboard";
 import { AgentDashboard } from "@/components/portal/AgentDashboard";
 import { formatNaira } from "@/lib/utils";
@@ -73,73 +71,38 @@ export default async function PortalPage() {
   const [bookingCount, contactCount, maintCount, advertCount, orgCount, serviceReqCount, pmLeadCount] = counts;
   const revenue = bookings.reduce((s, b) => (b.status !== "PENDING" ? s + b.amount : s), 0);
 
-  const heading = superAdmin ? "Admin Portal" : cc ? "Country Admin Portal" : "Staff Portal";
-
   return (
-    <Container className="py-10 sm:py-14">
-      <div className="flex flex-wrap items-center justify-between gap-4">
+    <Container className="py-8 sm:py-10">
+      <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
-          <h1 className="text-2xl font-bold text-ink">{heading}</h1>
+          <h1 className="text-2xl font-bold text-ink">Overview</h1>
           <p className="text-sm text-ink-muted">
-            Signed in as {session?.user?.email}
-            {role ? ` · ${ROLE_LABELS[role] ?? role}` : ""}
+            {role ? ROLE_LABELS[role] ?? role : ""}
             {cc ? ` · ${cc}` : ""}
           </p>
         </div>
-        <div className="flex items-center gap-2">
-          {(superAdmin || staffReadOnly) && (
-            <ButtonLink href="/portal/report" size="sm" variant="outline">
-              Status Report
-            </ButtonLink>
-          )}
-          {canMgr && (
-            <ButtonLink href="/portal/rentals" size="sm" variant="outline">
-              Manage Rentals
-            </ButtonLink>
-          )}
-          {canMgr && (
-            <ButtonLink href="/portal/organizations" size="sm" variant="outline">
-              Organizations
-            </ButtonLink>
-          )}
-          {canMgr && (
-            <ButtonLink href="/portal/services" size="sm" variant="outline">
-              Services
-            </ButtonLink>
-          )}
-          {superAdmin && (
-            <ButtonLink href="/portal/users" size="sm" variant="outline">
-              Manage Users
-            </ButtonLink>
-          )}
-          {superAdmin && (
-            <ButtonLink href="/portal/audit" size="sm" variant="outline">
-              Audit Log
-            </ButtonLink>
-          )}
-          {superAdmin && meiliEnabled() && (
-            <form action={reindexSearch}>
-              <button
-                type="submit"
-                className="rounded-lg border border-gray-300 bg-white px-3.5 py-2 text-sm font-semibold text-ink hover:border-ink"
-              >
-                Reindex Search
-              </button>
-            </form>
-          )}
-          <SignOutButton />
-        </div>
-        {staffReadOnly && (
-          <p className="w-full rounded-lg border border-blue-200 bg-blue-50 px-3 py-2 text-xs text-blue-700">
-            Read-only access — you can view records and generate reports. Contact an admin to make changes.
-          </p>
-        )}
-        {cc && (
-          <p className="w-full rounded-lg border border-brand-200 bg-brand-50 px-3 py-2 text-xs text-brand-700">
-            Country Admin — you manage listings, agencies, vendors and leads for {cc} only.
-          </p>
+        {superAdmin && meiliEnabled() && (
+          <form action={reindexSearch}>
+            <button
+              type="submit"
+              className="rounded-lg border border-gray-300 bg-white px-3.5 py-2 text-sm font-semibold text-ink hover:border-ink"
+            >
+              Reindex Search
+            </button>
+          </form>
         )}
       </div>
+
+      {staffReadOnly && (
+        <p className="mt-3 rounded-lg border border-blue-200 bg-blue-50 px-3 py-2 text-xs text-blue-700">
+          Read-only access — you can view records and generate reports. Contact an admin to make changes.
+        </p>
+      )}
+      {cc && (
+        <p className="mt-3 rounded-lg border border-brand-200 bg-brand-50 px-3 py-2 text-xs text-brand-700">
+          Country Admin — you manage listings, agencies, vendors and leads for {cc} only.
+        </p>
+      )}
 
       <div className="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
         <Stat label="Bookings" value={String(bookingCount)} />

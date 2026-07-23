@@ -25,14 +25,25 @@ function since(d: Date) {
   return new Intl.DateTimeFormat("en-NG", { dateStyle: "medium" }).format(d);
 }
 
-export default async function OrganizationsPage() {
+export default async function OrganizationsPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ kind?: string }>;
+}) {
   const session = await auth();
   const role = session?.user?.role;
   if (!canManage(role)) redirect("/portal");
 
+  const { kind } = await searchParams;
+  const kindFilter = kind && ORG_KINDS.includes(kind as (typeof ORG_KINDS)[number]) ? kind : null;
+
   // Country admins only see (and manage) organisations in their country.
   const scope = isCountryAdmin(role) && session?.user?.country ? { country: session.user.country } : {};
-  const orgs = await prisma.organization.findMany({ where: scope, orderBy: { createdAt: "desc" } });
+  const orgs = await prisma.organization.findMany({
+    where: { ...scope, ...(kindFilter ? { kind: kindFilter } : {}) },
+    orderBy: { createdAt: "desc" },
+  });
+  const listHeading = kindFilter ? `${ORG_KIND_LABEL[kindFilter]}s` : "All organizations";
 
   return (
     <Container className="py-10 sm:py-14">
@@ -125,7 +136,7 @@ export default async function OrganizationsPage() {
 
       {/* List */}
       <section className="mt-6 rounded-2xl border border-gray-200 bg-white p-6 shadow-card">
-        <h2 className="text-lg font-bold text-ink">All organizations ({orgs.length})</h2>
+        <h2 className="text-lg font-bold text-ink">{listHeading} ({orgs.length})</h2>
         {orgs.length === 0 ? (
           <p className="py-3 text-sm text-ink-muted">Nothing yet.</p>
         ) : (
