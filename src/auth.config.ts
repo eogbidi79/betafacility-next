@@ -1,4 +1,5 @@
 import type { NextAuthConfig } from "next-auth";
+import { routeAllowed } from "@/lib/rbac";
 
 // Edge-safe base config (no Node-only imports like Prisma/bcrypt). Used by
 // middleware and extended in auth.ts with the Credentials provider.
@@ -9,24 +10,21 @@ export const authConfig = {
   providers: [],
   callbacks: {
     authorized({ auth, request }) {
-      const path = request.nextUrl.pathname;
-      // User management and rental management are admin-only.
-      if (path.startsWith("/portal/users") || path.startsWith("/portal/rentals")) {
-        return auth?.user?.role === "ADMIN";
-      }
-      // Reports are for admin + staff.
-      if (path.startsWith("/portal/report")) {
-        return auth?.user?.role === "ADMIN" || auth?.user?.role === "STAFF";
-      }
-      if (path.startsWith("/portal")) return Boolean(auth?.user);
-      return true;
+      // Route gating is defined centrally in rbac.ts and re-checked server-side.
+      return routeAllowed(request.nextUrl.pathname, auth?.user?.role);
     },
     jwt({ token, user }) {
-      if (user) token.role = (user as { role?: string }).role;
+      if (user) {
+        token.role = (user as { role?: string }).role;
+        token.country = (user as { country?: string | null }).country ?? null;
+      }
       return token;
     },
     session({ session, token }) {
-      if (session.user) session.user.role = token.role as string | undefined;
+      if (session.user) {
+        session.user.role = token.role as string | undefined;
+        session.user.country = (token.country as string | null | undefined) ?? null;
+      }
       return session;
     },
   },

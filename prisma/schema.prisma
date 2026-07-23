@@ -13,9 +13,13 @@ datasource db {
 }
 
 enum Role {
-  ADMIN
-  STAFF
-  AGENT
+  ADMIN // Super Admin (global)
+  STAFF // Beta Facility Staff (global, read-only)
+  COUNTRY_ADMIN // scoped to one country via User.country
+  AGENCY
+  OWNER
+  VENDOR
+  AGENT // legacy organisation member
   TENANT
 }
 
@@ -25,6 +29,8 @@ model User {
   name         String?
   passwordHash String
   role         Role     @default(TENANT)
+  // Country scope for COUNTRY_ADMIN (null for global roles).
+  country      String?
   createdAt    DateTime @default(now())
 
   bookings Booking[]
@@ -164,6 +170,7 @@ model AdvertiseSubmission {
   transactionType String        @default("RENT") // RENT | SELL | BUY
   title           String
   category        String
+  country         String        @default("Nigeria") // for country-admin scoping
   location        String
   price           Int
   description     String

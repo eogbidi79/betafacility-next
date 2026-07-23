@@ -2,6 +2,7 @@
 
 import { Button } from "@/components/ui/Button";
 import { Field, Input, Select, Textarea } from "@/components/ui/Field";
+import { COUNTRY_NAMES } from "@/data/locations";
 import { useSubmit } from "./useSubmit";
 import { FormStatus } from "./FormStatus";
 
@@ -84,10 +85,18 @@ export function AdvertiseForm() {
             ))}
           </Select>
         </Field>
-        <Field label="Location" htmlFor="location" required>
-          <Input id="location" name="location" required placeholder="Area, Lagos" />
+        <Field label="Country" htmlFor="country" required>
+          <Select id="country" name="country" defaultValue="Nigeria">
+            {COUNTRY_NAMES.map((c) => (
+              <option key={c}>{c}</option>
+            ))}
+          </Select>
         </Field>
       </div>
+
+      <Field label="Location" htmlFor="location" required>
+        <Input id="location" name="location" required placeholder="Area, city" />
+      </Field>
 
       <Field label="Price (₦)" htmlFor="price" required>
         <Input id="price" name="price" inputMode="numeric" required placeholder="0" />

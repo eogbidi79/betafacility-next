@@ -9,6 +9,7 @@ import { Field, Input, Select, Textarea } from "@/components/ui/Field";
 import { PhotoUploader } from "@/components/portal/PhotoUploader";
 import { formatMoney } from "@/lib/currency";
 import { COUNTRY_NAMES, PROPERTY_TYPES, BEDROOM_TYPES, RENTAL_CATEGORIES, RENTAL_STATUSES, LISTED_BY, CURRENCIES } from "@/data/locations";
+import { canManage, isCountryAdmin } from "@/lib/rbac";
 import { createListing, updateListing, deleteListing, setAvailability, setRentalFeatured } from "./actions";
 
 export const dynamic = "force-dynamic";
@@ -128,9 +129,14 @@ function Fields({ l }: { l?: ListingDTO }) {
 
 export default async function ManageRentalsPage() {
   const session = await auth();
-  if (session?.user?.role !== "ADMIN") redirect("/portal");
+  const role = session?.user?.role;
+  if (!canManage(role)) redirect("/portal");
 
-  const rows = await prisma.rentalListing.findMany({ orderBy: { createdAt: "asc" } });
+  const countryScope = isCountryAdmin(role) && session?.user?.country ? session.user.country : null;
+  const rows = await prisma.rentalListing.findMany({
+    where: countryScope ? { country: countryScope } : {},
+    orderBy: { createdAt: "asc" },
+  });
   const listings = rows.map(toDTO);
 
   return (

@@ -2,9 +2,9 @@
 
 import { ListingStatus, RequestStatus } from "@prisma/client";
 import { revalidatePath } from "next/cache";
-import { auth } from "@/auth";
 import { prisma } from "@/lib/db";
 import { logAudit } from "@/lib/audit";
+import { requireManage, requireSuperAdmin } from "@/lib/authz";
 import { meiliEnabled, reindexAll } from "@/lib/meilisearch";
 import { captureError } from "@/lib/observability";
 import {
@@ -13,17 +13,11 @@ import {
   notifyTenancyRejected,
 } from "@/lib/notifications";
 
-async function requireAuth(): Promise<string> {
-  const session = await auth();
-  // Only admins can change records; staff are read-only.
-  if (session?.user?.role !== "ADMIN") throw new Error("Forbidden");
-  return session.user.email ?? "system";
-}
-
 const TENANCY_STAGES = ["UNDER_REVIEW", "ACCEPTED", "REJECTED"] as const;
 
 export async function setTenancyStage(formData: FormData) {
-  const actor = await requireAuth();
+  // Bookings carry no country; tenancy decisions are a super-admin action.
+  const actor = await requireSuperAdmin();
   const id = String(formData.get("id") ?? "");
   const stage = String(formData.get("stage") ?? "");
   if (!id || !TENANCY_STAGES.includes(stage as (typeof TENANCY_STAGES)[number])) return;
@@ -38,32 +32,36 @@ export async function setTenancyStage(formData: FormData) {
   else if (stage === "ACCEPTED") await notifyTenancyAccepted(booking);
   else if (stage === "REJECTED") await notifyTenancyRejected(booking);
 
-  await logAudit({ actor, action: "tenancy.stage", entity: "Booking", entityId: id, summary: `→ ${stage}` });
+  await logAudit({ actor: actor.email, action: "tenancy.stage", entity: "Booking", entityId: id, summary: `→ ${stage}` });
   revalidatePath("/portal");
 }
 
 export async function setListingStatus(formData: FormData) {
-  const actor = await requireAuth();
   const id = String(formData.get("id") ?? "");
   const status = String(formData.get("status") ?? "");
   if (!id || !(status in ListingStatus)) return;
+  const sub = await prisma.advertiseSubmission.findUnique({ where: { id }, select: { country: true } });
+  if (!sub) return;
+  const actor = await requireManage(sub.country);
   await prisma.advertiseSubmission.update({
     where: { id },
     data: { status: status as ListingStatus },
   });
-  await logAudit({ actor, action: "listing.status", entity: "AdvertiseSubmission", entityId: id, summary: `→ ${status}` });
+  await logAudit({ actor: actor.email, action: "listing.status", entity: "AdvertiseSubmission", entityId: id, summary: `→ ${status}` });
   revalidatePath("/portal");
   revalidatePath("/listings");
 }
 
 export async function setListingFeatured(formData: FormData) {
-  const actor = await requireAuth();
   const id = String(formData.get("id") ?? "");
   const featured = String(formData.get("featured") ?? "") === "true";
   if (!id) return;
+  const sub = await prisma.advertiseSubmission.findUnique({ where: { id }, select: { country: true } });
+  if (!sub) return;
+  const actor = await requireManage(sub.country);
   await prisma.advertiseSubmission.update({ where: { id }, data: { featured } });
   await logAudit({
-    actor,
+    actor: actor.email,
     action: "listing.featured",
     entity: "AdvertiseSubmission",
     entityId: id,
@@ -74,25 +72,27 @@ export async function setListingFeatured(formData: FormData) {
 }
 
 export async function setLeadStatus(formData: FormData) {
-  const actor = await requireAuth();
   const id = String(formData.get("id") ?? "");
   const status = String(formData.get("status") ?? "");
   if (!id || !(status in RequestStatus)) return;
+  const lead = await prisma.propertyManagementLead.findUnique({ where: { id }, select: { country: true } });
+  if (!lead) return;
+  const actor = await requireManage(lead.country);
   await prisma.propertyManagementLead.update({
     where: { id },
     data: { status: status as RequestStatus },
   });
-  await logAudit({ actor, action: "lead.status", entity: "PropertyManagementLead", entityId: id, summary: `→ ${status}` });
+  await logAudit({ actor: actor.email, action: "lead.status", entity: "PropertyManagementLead", entityId: id, summary: `→ ${status}` });
   revalidatePath("/portal");
 }
 
 export async function reindexSearch() {
-  const actor = await requireAuth();
+  const actor = await requireSuperAdmin();
   if (!meiliEnabled()) return;
   try {
     const counts = await reindexAll();
     const total = Object.values(counts).reduce((a, b) => a + b, 0);
-    await logAudit({ actor, action: "search.reindex", entity: "Meilisearch", summary: `${total} documents` });
+    await logAudit({ actor: actor.email, action: "search.reindex", entity: "Meilisearch", summary: `${total} documents` });
   } catch (err) {
     captureError(err, { where: "reindexSearch" });
   }
@@ -100,7 +100,8 @@ export async function reindexSearch() {
 }
 
 export async function setMaintenanceStatus(formData: FormData) {
-  const actor = await requireAuth();
+  // Maintenance requests carry no country; keep as a super-admin action.
+  const actor = await requireSuperAdmin();
   const id = String(formData.get("id") ?? "");
   const status = String(formData.get("status") ?? "");
   if (!id || !(status in RequestStatus)) return;
@@ -108,6 +109,6 @@ export async function setMaintenanceStatus(formData: FormData) {
     where: { id },
     data: { status: status as RequestStatus },
   });
-  await logAudit({ actor, action: "maintenance.status", entity: "MaintenanceRequest", entityId: id, summary: `→ ${status}` });
+  await logAudit({ actor: actor.email, action: "maintenance.status", entity: "MaintenanceRequest", entityId: id, summary: `→ ${status}` });
   revalidatePath("/portal");
 }

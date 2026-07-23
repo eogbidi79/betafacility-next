@@ -1,14 +1,13 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { auth } from "@/auth";
 import { prisma } from "@/lib/db";
 import { logAudit } from "@/lib/audit";
+import { requireManage, pinnedCountry } from "@/lib/authz";
 
-async function requireAdmin(): Promise<string> {
-  const session = await auth();
-  if (session?.user?.role !== "ADMIN") throw new Error("Forbidden");
-  return session.user.email ?? "system";
+async function loadRentalCountry(id: string): Promise<string | null | undefined> {
+  const r = await prisma.rentalListing.findUnique({ where: { id }, select: { country: true } });
+  return r?.country;
 }
 
 const lines = (v: FormDataEntryValue | null) =>
@@ -74,48 +73,59 @@ function revalidate() {
 }
 
 export async function createListing(fd: FormData) {
-  const actor = await requireAdmin();
+  const actor = await requireManage();
   const data = collect(fd);
   if (!data.title) return;
+  data.country = pinnedCountry(actor, data.country); // country admins pinned to their country
   const created = await prisma.rentalListing.create({ data });
-  await logAudit({ actor, action: "rental.create", entity: "RentalListing", entityId: created.id, summary: data.title });
+  await logAudit({ actor: actor.email, action: "rental.create", entity: "RentalListing", entityId: created.id, summary: data.title });
   revalidate();
 }
 
 export async function updateListing(fd: FormData) {
-  const actor = await requireAdmin();
   const id = String(fd.get("id") ?? "");
   if (!id) return;
-  await prisma.rentalListing.update({ where: { id }, data: collect(fd) });
-  await logAudit({ actor, action: "rental.update", entity: "RentalListing", entityId: id });
+  const country = await loadRentalCountry(id);
+  if (country === undefined) return;
+  const actor = await requireManage(country);
+  const data = collect(fd);
+  data.country = pinnedCountry(actor, data.country);
+  await prisma.rentalListing.update({ where: { id }, data });
+  await logAudit({ actor: actor.email, action: "rental.update", entity: "RentalListing", entityId: id });
   revalidate();
 }
 
 export async function setAvailability(fd: FormData) {
-  const actor = await requireAdmin();
   const id = String(fd.get("id") ?? "");
   const availableUnits = num(fd.get("availableUnits")) ?? 0;
   if (!id) return;
+  const country = await loadRentalCountry(id);
+  if (country === undefined) return;
+  const actor = await requireManage(country);
   await prisma.rentalListing.update({ where: { id }, data: { availableUnits } });
-  await logAudit({ actor, action: "rental.availability", entity: "RentalListing", entityId: id, summary: `${availableUnits} available` });
+  await logAudit({ actor: actor.email, action: "rental.availability", entity: "RentalListing", entityId: id, summary: `${availableUnits} available` });
   revalidate();
 }
 
 export async function setRentalFeatured(fd: FormData) {
-  const actor = await requireAdmin();
   const id = String(fd.get("id") ?? "");
   const featured = String(fd.get("featured") ?? "") === "true";
   if (!id) return;
+  const country = await loadRentalCountry(id);
+  if (country === undefined) return;
+  const actor = await requireManage(country);
   await prisma.rentalListing.update({ where: { id }, data: { featured } });
-  await logAudit({ actor, action: "rental.featured", entity: "RentalListing", entityId: id, summary: featured ? "featured" : "unfeatured" });
+  await logAudit({ actor: actor.email, action: "rental.featured", entity: "RentalListing", entityId: id, summary: featured ? "featured" : "unfeatured" });
   revalidate();
 }
 
 export async function deleteListing(fd: FormData) {
-  const actor = await requireAdmin();
   const id = String(fd.get("id") ?? "");
   if (!id) return;
+  const country = await loadRentalCountry(id);
+  if (country === undefined) return;
+  const actor = await requireManage(country);
   await prisma.rentalListing.delete({ where: { id } });
-  await logAudit({ actor, action: "rental.delete", entity: "RentalListing", entityId: id });
+  await logAudit({ actor: actor.email, action: "rental.delete", entity: "RentalListing", entityId: id });
   revalidate();
 }

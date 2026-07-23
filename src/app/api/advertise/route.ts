@@ -30,6 +30,7 @@ export async function POST(req: Request) {
         listingType: d.listingType,
         title: d.title,
         category: d.category,
+        country: d.country,
         location: d.location,
         price: d.price,
         description: d.description,

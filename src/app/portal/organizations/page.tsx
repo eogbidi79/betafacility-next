@@ -6,6 +6,7 @@ import { Badge } from "@/components/ui/Badge";
 import { ButtonLink } from "@/components/ui/Button";
 import { Field, Input, Select } from "@/components/ui/Field";
 import { COUNTRY_NAMES } from "@/data/locations";
+import { canManage, isCountryAdmin } from "@/lib/rbac";
 import { ORG_KINDS, ORG_KIND_LABEL, orgLocation } from "@/lib/organizations";
 import {
   createOrganization,
@@ -26,9 +27,12 @@ function since(d: Date) {
 
 export default async function OrganizationsPage() {
   const session = await auth();
-  if (session?.user?.role !== "ADMIN") redirect("/portal");
+  const role = session?.user?.role;
+  if (!canManage(role)) redirect("/portal");
 
-  const orgs = await prisma.organization.findMany({ orderBy: { createdAt: "desc" } });
+  // Country admins only see (and manage) organisations in their country.
+  const scope = isCountryAdmin(role) && session?.user?.country ? { country: session.user.country } : {};
+  const orgs = await prisma.organization.findMany({ where: scope, orderBy: { createdAt: "desc" } });
 
   return (
     <Container className="py-10 sm:py-14">

@@ -7,6 +7,7 @@ import { ButtonLink } from "@/components/ui/Button";
 import { Field, Input, Select } from "@/components/ui/Field";
 import { formatMoney } from "@/lib/currency";
 import { COUNTRY_NAMES, CURRENCIES } from "@/data/locations";
+import { canManage, isCountryAdmin } from "@/lib/rbac";
 import { SERVICE_CATEGORIES } from "@/data/services";
 import {
   createService,
@@ -26,16 +27,29 @@ function since(d: Date) {
 
 export default async function ServicesAdminPage() {
   const session = await auth();
-  if (session?.user?.role !== "ADMIN") redirect("/portal");
+  const role = session?.user?.role;
+  if (!canManage(role)) redirect("/portal");
 
-  const [vendors, services, requests] = await Promise.all([
+  const countryScope = isCountryAdmin(role) && session?.user?.country ? session.user.country : null;
+
+  const [vendors, services] = await Promise.all([
     prisma.organization.findMany({
-      where: { kind: "VENDOR" },
+      where: { kind: "VENDOR", ...(countryScope ? { country: countryScope } : {}) },
       orderBy: { name: "asc" },
     }),
-    prisma.service.findMany({ orderBy: { createdAt: "desc" }, include: { organization: true } }),
-    prisma.serviceRequest.findMany({ orderBy: { createdAt: "desc" }, take: 25 }),
+    prisma.service.findMany({
+      where: countryScope ? { country: countryScope } : {},
+      orderBy: { createdAt: "desc" },
+      include: { organization: true },
+    }),
   ]);
+
+  // Requests scoped to this country's services (ServiceRequest has no relation).
+  const requests = await prisma.serviceRequest.findMany({
+    where: countryScope ? { serviceId: { in: services.map((s) => s.id) } } : {},
+    orderBy: { createdAt: "desc" },
+    take: 25,
+  });
 
   return (
     <Container className="py-10 sm:py-14">

@@ -40,6 +40,7 @@ export const advertiseSchema = z.object({
   listingType: z.string().trim().min(1),
   title: z.string().trim().min(3, "Add a property title").max(200),
   category: z.string().trim().min(1, "Select a category"),
+  country: z.string().trim().min(2).max(60).default("Nigeria"),
   location: z.string().trim().min(2, "Add a location"),
   price: z.coerce.number().int().min(0, "Enter a valid price"),
   description: message,

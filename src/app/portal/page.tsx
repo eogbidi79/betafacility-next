@@ -8,6 +8,7 @@ import { TenantDashboard } from "@/components/portal/TenantDashboard";
 import { AgentDashboard } from "@/components/portal/AgentDashboard";
 import { formatNaira } from "@/lib/utils";
 import { meiliEnabled } from "@/lib/meilisearch";
+import { canManage, isSuperAdmin, isStaff, isCountryAdmin, isOrgMember, ROLE_LABELS } from "@/lib/rbac";
 import { setListingStatus, setListingFeatured, setMaintenanceStatus, setTenancyStage, setLeadStatus, reindexSearch } from "./actions";
 
 const MAINT_STATUSES = ["NEW", "IN_PROGRESS", "RESOLVED", "CLOSED"] as const;
@@ -34,75 +35,87 @@ export default async function PortalPage() {
 
   // Role-specific portals.
   if (role === "TENANT") return <TenantDashboard email={email} name={name} />;
-  if (role === "AGENT") return <AgentDashboard email={email} name={name} />;
+  if (isOrgMember(role)) return <AgentDashboard email={email} name={name} />;
 
-  const isAdmin = role === "ADMIN";
+  const superAdmin = isSuperAdmin(role);
+  const canMgr = canManage(role); // super admin or country admin (can change records)
+  const staffReadOnly = isStaff(role);
+  const cc = isCountryAdmin(role) && session?.user?.country ? session.user.country : null;
+
+  // Country-bearing entities are scoped to a country admin's country.
+  const advertWhere = cc ? { country: cc } : {};
+  const leadWhere = cc ? { country: cc } : {};
+  // Bookings / contacts / maintenance carry no country — only global roles see them.
+  const showGlobalOps = !cc;
 
   const [tenancyApps, bookings, contacts, maintenance, adverts, pmLeads, counts] = await Promise.all([
-    prisma.booking.findMany({
-      where: { term: "long-term" },
-      orderBy: { createdAt: "desc" },
-      take: 10,
-    }),
-    prisma.booking.findMany({ orderBy: { createdAt: "desc" }, take: 8, include: { rental: true } }),
-    prisma.contactMessage.findMany({ orderBy: { createdAt: "desc" }, take: 8 }),
-    prisma.maintenanceRequest.findMany({ orderBy: { createdAt: "desc" }, take: 8 }),
-    prisma.advertiseSubmission.findMany({ orderBy: { createdAt: "desc" }, take: 8 }),
-    prisma.propertyManagementLead.findMany({ orderBy: { createdAt: "desc" }, take: 8 }),
+    showGlobalOps
+      ? prisma.booking.findMany({ where: { term: "long-term" }, orderBy: { createdAt: "desc" }, take: 10 })
+      : [],
+    showGlobalOps
+      ? prisma.booking.findMany({ orderBy: { createdAt: "desc" }, take: 8, include: { rental: true } })
+      : [],
+    showGlobalOps ? prisma.contactMessage.findMany({ orderBy: { createdAt: "desc" }, take: 8 }) : [],
+    showGlobalOps ? prisma.maintenanceRequest.findMany({ orderBy: { createdAt: "desc" }, take: 8 }) : [],
+    prisma.advertiseSubmission.findMany({ where: advertWhere, orderBy: { createdAt: "desc" }, take: 8 }),
+    prisma.propertyManagementLead.findMany({ where: leadWhere, orderBy: { createdAt: "desc" }, take: 8 }),
     Promise.all([
-      prisma.booking.count(),
-      prisma.contactMessage.count(),
-      prisma.maintenanceRequest.count(),
-      prisma.advertiseSubmission.count(),
-      prisma.organization.count(),
+      showGlobalOps ? prisma.booking.count() : Promise.resolve(0),
+      showGlobalOps ? prisma.contactMessage.count() : Promise.resolve(0),
+      showGlobalOps ? prisma.maintenanceRequest.count() : Promise.resolve(0),
+      prisma.advertiseSubmission.count({ where: advertWhere }),
+      prisma.organization.count({ where: cc ? { country: cc } : {} }),
       prisma.serviceRequest.count(),
-      prisma.propertyManagementLead.count(),
+      prisma.propertyManagementLead.count({ where: leadWhere }),
     ]),
   ]);
 
   const [bookingCount, contactCount, maintCount, advertCount, orgCount, serviceReqCount, pmLeadCount] = counts;
   const revenue = bookings.reduce((s, b) => (b.status !== "PENDING" ? s + b.amount : s), 0);
 
+  const heading = superAdmin ? "Admin Portal" : cc ? "Country Admin Portal" : "Staff Portal";
+
   return (
     <Container className="py-10 sm:py-14">
       <div className="flex flex-wrap items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-ink">{isAdmin ? "Admin Portal" : "Staff Portal"}</h1>
+          <h1 className="text-2xl font-bold text-ink">{heading}</h1>
           <p className="text-sm text-ink-muted">
             Signed in as {session?.user?.email}
-            {role ? ` · ${role}` : ""}
+            {role ? ` · ${ROLE_LABELS[role] ?? role}` : ""}
+            {cc ? ` · ${cc}` : ""}
           </p>
         </div>
         <div className="flex items-center gap-2">
           <ButtonLink href="/portal/report" size="sm" variant="outline">
             Status Report
           </ButtonLink>
-          {isAdmin && (
+          {canMgr && (
             <ButtonLink href="/portal/rentals" size="sm" variant="outline">
               Manage Rentals
             </ButtonLink>
           )}
-          {isAdmin && (
+          {canMgr && (
             <ButtonLink href="/portal/organizations" size="sm" variant="outline">
               Organizations
             </ButtonLink>
           )}
-          {isAdmin && (
+          {canMgr && (
             <ButtonLink href="/portal/services" size="sm" variant="outline">
               Services
             </ButtonLink>
           )}
-          {isAdmin && (
+          {superAdmin && (
             <ButtonLink href="/portal/users" size="sm" variant="outline">
               Manage Users
             </ButtonLink>
           )}
-          {isAdmin && (
+          {superAdmin && (
             <ButtonLink href="/portal/audit" size="sm" variant="outline">
               Audit Log
             </ButtonLink>
           )}
-          {isAdmin && meiliEnabled() && (
+          {superAdmin && meiliEnabled() && (
             <form action={reindexSearch}>
               <button
                 type="submit"
@@ -114,9 +127,14 @@ export default async function PortalPage() {
           )}
           <SignOutButton />
         </div>
-        {!isAdmin && (
+        {staffReadOnly && (
           <p className="w-full rounded-lg border border-blue-200 bg-blue-50 px-3 py-2 text-xs text-blue-700">
             Read-only access — you can view records and generate reports. Contact an admin to make changes.
+          </p>
+        )}
+        {cc && (
+          <p className="w-full rounded-lg border border-brand-200 bg-brand-50 px-3 py-2 text-xs text-brand-700">
+            Country Admin — you manage listings, agencies, vendors and leads for {cc} only.
           </p>
         )}
       </div>
@@ -159,7 +177,7 @@ export default async function PortalPage() {
                           ? "PAID"
                           : t.stage ?? "APPLIED"}
                     </Badge>
-                    {isAdmin && !decided && (
+                    {superAdmin && !decided && (
                       <div className="flex gap-1">
                         {t.stage !== "UNDER_REVIEW" && (
                           <StageBtn id={t.id} stage="UNDER_REVIEW" label="Start review" className="bg-ink text-white hover:bg-ink-soft" />
@@ -198,7 +216,7 @@ export default async function PortalPage() {
                       .join(" · ")}
                   </p>
                 </div>
-                {isAdmin ? (
+                {canMgr ? (
                   <form action={setLeadStatus} className="flex items-center gap-1.5">
                     <input type="hidden" name="id" value={l.id} />
                     <select
@@ -282,7 +300,7 @@ export default async function PortalPage() {
                     </p>
                     <p className="text-xs text-ink-muted tabular">{m.reference} · {m.unit} · {since(m.createdAt)}</p>
                   </div>
-                  {isAdmin ? (
+                  {superAdmin ? (
                     <form action={setMaintenanceStatus} className="flex items-center gap-1.5">
                       <input type="hidden" name="id" value={m.id} />
                       <select
@@ -329,7 +347,7 @@ export default async function PortalPage() {
                     <Badge tone={a.status === "APPROVED" ? "success" : a.status === "REJECTED" ? "neutral" : "brand"}>
                       {a.status}
                     </Badge>
-                    {isAdmin && (
+                    {canMgr && (
                       <div className="flex gap-1">
                         <form action={setListingStatus}>
                           <input type="hidden" name="id" value={a.id} />

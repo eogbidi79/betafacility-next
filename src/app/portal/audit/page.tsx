@@ -3,6 +3,7 @@ import { auth } from "@/auth";
 import { prisma } from "@/lib/db";
 import { Container } from "@/components/ui/Container";
 import { ButtonLink } from "@/components/ui/Button";
+import { isSuperAdmin } from "@/lib/rbac";
 
 export const dynamic = "force-dynamic";
 export const metadata = { title: "Audit Log", robots: { index: false } };
@@ -13,7 +14,7 @@ function when(d: Date) {
 
 export default async function AuditPage() {
   const session = await auth();
-  if (session?.user?.role !== "ADMIN") redirect("/portal");
+  if (!isSuperAdmin(session?.user?.role)) redirect("/portal");
 
   const logs = await prisma.auditLog.findMany({ orderBy: { createdAt: "desc" }, take: 200 });
 

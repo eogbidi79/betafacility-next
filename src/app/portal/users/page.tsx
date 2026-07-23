@@ -5,15 +5,23 @@ import { Container } from "@/components/ui/Container";
 import { Badge } from "@/components/ui/Badge";
 import { ButtonLink } from "@/components/ui/Button";
 import { Field, Input, Select } from "@/components/ui/Field";
+import { ASSIGNABLE_ROLES, ROLE_LABELS, isSuperAdmin } from "@/lib/rbac";
+import { COUNTRY_NAMES } from "@/data/locations";
 import { createUser, setUserRole, resetUserPassword, deleteUser } from "./actions";
 
 export const dynamic = "force-dynamic";
 export const metadata = { title: "Manage Users", robots: { index: false } };
 
-const ROLES = ["ADMIN", "STAFF", "AGENT", "TENANT"] as const;
-
 const roleTone = (r: string) =>
-  r === "ADMIN" ? "brand" : r === "STAFF" ? "info" : r === "AGENT" ? "success" : "neutral";
+  r === "ADMIN"
+    ? "brand"
+    : r === "COUNTRY_ADMIN"
+      ? "brand"
+      : r === "STAFF"
+        ? "info"
+        : r === "TENANT"
+          ? "neutral"
+          : "success";
 
 function since(d: Date) {
   return new Intl.DateTimeFormat("en-NG", { dateStyle: "medium" }).format(d);
@@ -21,7 +29,7 @@ function since(d: Date) {
 
 export default async function UsersPage() {
   const session = await auth();
-  if (session?.user?.role !== "ADMIN") redirect("/portal");
+  if (!isSuperAdmin(session?.user?.role)) redirect("/portal");
 
   const users = await prisma.user.findMany({ orderBy: { createdAt: "desc" } });
 
@@ -42,7 +50,7 @@ export default async function UsersPage() {
       {/* Create */}
       <section className="mt-8 rounded-2xl border border-gray-200 bg-white p-6 shadow-card">
         <h2 className="text-lg font-bold text-ink">Create a login</h2>
-        <form action={createUser} className="mt-4 grid gap-4 sm:grid-cols-2 lg:grid-cols-5 lg:items-end">
+        <form action={createUser} className="mt-4 grid gap-4 sm:grid-cols-2 lg:grid-cols-6 lg:items-end">
           <Field label="Full name" htmlFor="name" className="lg:col-span-1">
             <Input id="name" name="name" placeholder="Jane Doe" />
           </Field>
@@ -51,10 +59,18 @@ export default async function UsersPage() {
           </Field>
           <Field label="Role" htmlFor="role" required>
             <Select id="role" name="role" defaultValue="TENANT">
-              {ROLES.map((r) => (
+              {ASSIGNABLE_ROLES.map((r) => (
                 <option key={r} value={r}>
-                  {r}
+                  {ROLE_LABELS[r]}
                 </option>
+              ))}
+            </Select>
+          </Field>
+          <Field label="Country (Country Admin)" htmlFor="country">
+            <Select id="country" name="country" defaultValue="">
+              <option value="">— none —</option>
+              {COUNTRY_NAMES.map((c) => (
+                <option key={c}>{c}</option>
               ))}
             </Select>
           </Field>
@@ -69,7 +85,8 @@ export default async function UsersPage() {
           </button>
         </form>
         <p className="mt-2 text-xs text-ink-muted">
-          Tenants: create a login with the same email they used to book so they see their bookings.
+          Country Admins manage only their selected country. Tenants: use the same email they booked with. Agency /
+          Owner / Vendor logins pair with an organization (Organizations page).
         </p>
       </section>
 
@@ -83,7 +100,7 @@ export default async function UsersPage() {
                 <th className="py-2">User</th>
                 <th className="py-2">Role</th>
                 <th className="py-2">Created</th>
-                <th className="py-2">Change role</th>
+                <th className="py-2">Change role / country</th>
                 <th className="py-2">Reset password</th>
                 <th className="py-2"></th>
               </tr>
@@ -96,21 +113,33 @@ export default async function UsersPage() {
                     <p className="text-xs text-ink-muted">{u.email}</p>
                   </td>
                   <td className="py-3">
-                    <Badge tone={roleTone(u.role)}>{u.role}</Badge>
+                    <Badge tone={roleTone(u.role)}>{ROLE_LABELS[u.role] ?? u.role}</Badge>
+                    {u.country && <p className="mt-1 text-xs text-ink-muted">{u.country}</p>}
                   </td>
                   <td className="py-3 text-ink-muted">{since(u.createdAt)}</td>
                   <td className="py-3">
-                    <form action={setUserRole} className="flex items-center gap-1.5">
+                    <form action={setUserRole} className="flex flex-wrap items-center gap-1.5">
                       <input type="hidden" name="id" value={u.id} />
                       <select
                         name="role"
                         defaultValue={u.role}
                         className="rounded-md border border-gray-300 bg-white px-2 py-1 text-xs"
                       >
-                        {ROLES.map((r) => (
+                        {ASSIGNABLE_ROLES.map((r) => (
                           <option key={r} value={r}>
-                            {r}
+                            {ROLE_LABELS[r]}
                           </option>
+                        ))}
+                      </select>
+                      <select
+                        name="country"
+                        defaultValue={u.country ?? ""}
+                        className="rounded-md border border-gray-300 bg-white px-2 py-1 text-xs"
+                        title="Country (for Country Admin)"
+                      >
+                        <option value="">country…</option>
+                        {COUNTRY_NAMES.map((c) => (
+                          <option key={c}>{c}</option>
                         ))}
                       </select>
                       <button className="rounded-md bg-ink px-2.5 py-1 text-xs font-semibold text-white hover:bg-ink-soft">
