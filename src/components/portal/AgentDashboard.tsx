@@ -139,14 +139,14 @@ export async function AgentDashboard({ email, name }: { email: string; name?: st
           </div>
 
           <div className="mt-6">
-            <ButtonLink href="/advertise" size="sm">+ Submit a new property</ButtonLink>
+            <ButtonLink href="/list-property" size="sm">+ Submit a new property</ButtonLink>
           </div>
 
           <section className="mt-6 rounded-2xl border border-gray-200 bg-white p-6 shadow-card">
             <h2 className="text-lg font-bold text-ink">My submitted listings</h2>
             {listings.length === 0 ? (
               <p className="py-3 text-sm text-ink-muted">
-                No listings yet. <Link href="/advertise" className="font-medium text-brand-600">Submit one →</Link>
+                No listings yet. <Link href="/list-property" className="font-medium text-brand-600">Submit one →</Link>
               </p>
             ) : (
               <ul className="mt-2 divide-y divide-gray-100">

@@ -16,7 +16,7 @@ import {
   LISTED_BY,
 } from "@/data/locations";
 
-const RentalsMap = dynamic(() => import("./RentalsMap"), {
+const RentalsMap = dynamic(() => import("@/components/map/RentalsMap"), {
   ssr: false,
   loading: () => (
     <div className="flex h-full items-center justify-center bg-gray-100 text-sm text-ink-muted">Loading map…</div>

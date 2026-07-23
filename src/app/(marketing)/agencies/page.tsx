@@ -83,7 +83,7 @@ export default async function AgenciesPage() {
         ) : (
           <div className="rounded-2xl border border-dashed border-gray-300 bg-gray-50 p-10 text-center">
             <p className="text-ink-muted">No agencies listed yet. Check back soon.</p>
-            <Link href="/advertise" className="mt-2 inline-block font-medium text-brand-600">
+            <Link href="/list-property" className="mt-2 inline-block font-medium text-brand-600">
               Partner with us →
             </Link>
           </div>

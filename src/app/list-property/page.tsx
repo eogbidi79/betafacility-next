@@ -4,13 +4,13 @@ import { AdvertiseForm } from "@/components/forms/AdvertiseForm";
 import { pageMetadata } from "@/lib/seo";
 
 export const metadata = pageMetadata({
-  title: "Advertise Your Property",
+  title: "List Your Property",
   description:
     "Landlords, agents and property owners — list your residential or commercial property with BetaFacility Managers and reach thousands of renters.",
-  path: "/advertise",
+  path: "/list-property",
 });
 
-export default function AdvertisePage() {
+export default function ListPropertyPage() {
   return (
     <>
       <PageHeader

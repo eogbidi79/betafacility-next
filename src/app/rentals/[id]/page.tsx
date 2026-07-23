@@ -8,7 +8,7 @@ import { Container } from "@/components/ui/Container";
 import { Badge } from "@/components/ui/Badge";
 import { ButtonLink } from "@/components/ui/Button";
 import { Gallery } from "@/components/property/Gallery";
-import { MapEmbed } from "@/components/property/MapEmbed";
+import { MapEmbed } from "@/components/map/MapEmbed";
 import { RentalListingCard } from "@/components/property/RentalListingCard";
 import { site } from "@/data/site";
 

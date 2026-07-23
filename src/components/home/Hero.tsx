@@ -9,7 +9,7 @@ const primaryCtas = [
 ];
 
 const secondaryCtas = [
-  { label: "Advertise Your Property", href: "/advertise" },
+  { label: "List Your Property", href: "/list-property" },
   { label: "Report an Issue", href: "/facility-management" },
   { label: "Book Maintenance", href: "/facility-management" },
 ];

@@ -72,8 +72,8 @@ export default async function ListingsPage({
         ) : (
           <div className="mt-12 rounded-2xl border border-dashed border-gray-300 bg-gray-50 p-10 text-center">
             <p className="text-ink-muted">No listings here yet. Check back soon.</p>
-            <Link href="/advertise" className="mt-2 inline-block font-medium text-brand-600">
-              Advertise your property →
+            <Link href="/list-property" className="mt-2 inline-block font-medium text-brand-600">
+              List your property →
             </Link>
           </div>
         )}

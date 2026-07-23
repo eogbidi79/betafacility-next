@@ -55,7 +55,7 @@ export const mainNav: NavEntry[] = [
     label: "For Owners",
     children: [
       { label: "Manage My Property", href: "/property-management" },
-      { label: "Advertise Property", href: "/advertise" },
+      { label: "List Property", href: "/list-property" },
       { label: "Facility Management", href: "/facility-management" },
     ],
   },
@@ -77,7 +77,7 @@ export const footerLinks = [
   { label: "Property Services", href: "/property-services" },
   { label: "Property Management", href: "/property-management" },
   { label: "Facility Management", href: "/facility-management" },
-  { label: "Advertise Property", href: "/advertise" },
+  { label: "List Property", href: "/list-property" },
   { label: "Portfolio", href: "/properties" },
   { label: "Contact Us", href: "/contact" },
 ] as const;
