@@ -20,6 +20,20 @@
   ::selection {
     @apply bg-brand-500/20 text-ink;
   }
+
+  /* Accessible, visible focus for keyboard users on every interactive control
+     (many custom buttons/links/selects don't set their own focus styles). */
+  a:focus-visible,
+  button:focus-visible,
+  input:focus-visible,
+  select:focus-visible,
+  textarea:focus-visible,
+  [tabindex]:focus-visible,
+  [role="button"]:focus-visible {
+    outline: 2px solid #ff751f;
+    outline-offset: 2px;
+    border-radius: 6px;
+  }
 }
 
 @layer utilities {

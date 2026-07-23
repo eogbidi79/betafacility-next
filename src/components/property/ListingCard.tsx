@@ -1,7 +1,7 @@
 import type { AdvertiseSubmission } from "@prisma/client";
 import { Badge } from "@/components/ui/Badge";
 import { ButtonLink } from "@/components/ui/Button";
-import { formatNaira } from "@/lib/utils";
+import { formatMoney } from "@/lib/currency";
 
 export const TXN_LABEL: Record<string, string> = {
   RENT: "For Rent",
@@ -42,7 +42,9 @@ export function ListingCard({ listing }: { listing: AdvertiseSubmission }) {
 
       <div className="flex flex-1 flex-col p-5">
         <h3 className="text-lg font-bold text-ink">{listing.title}</h3>
-        <p className="mt-1 line-clamp-1 text-sm text-ink-muted">{listing.location}</p>
+        <p className="mt-1 line-clamp-1 text-sm text-ink-muted">
+          {[listing.location, listing.country].filter(Boolean).join(", ")}
+        </p>
         <p className="mt-3 line-clamp-2 text-sm leading-relaxed text-ink-soft">{listing.description}</p>
 
         <div className="mt-4 flex flex-wrap gap-2">
@@ -56,13 +58,17 @@ export function ListingCard({ listing }: { listing: AdvertiseSubmission }) {
 
         <div className="mt-5 flex items-end justify-between border-t border-gray-100 pt-4">
           <div>
-            <span className="text-2xl font-bold text-ink">{formatNaira(listing.price)}</span>
+            <span className="text-2xl font-bold text-ink">
+              {formatMoney(listing.price, listing.currencyCode)}
+            </span>
             {priceSuffix && <span className="block text-xs text-ink-muted">{priceSuffix}</span>}
           </div>
           <ButtonLink href={`/contact?ref=${listing.reference}`} size="sm" variant="outline">
             Enquire
           </ButtonLink>
         </div>
+
+        <p className="mt-3 text-xs text-ink-muted">Listed by: {listing.role}</p>
       </div>
     </article>
   );

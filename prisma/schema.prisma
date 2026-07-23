@@ -173,6 +173,7 @@ model AdvertiseSubmission {
   country         String        @default("Nigeria") // for country-admin scoping
   location        String
   price           Int
+  currencyCode    String        @default("NGN") // NGN | CAD — follows country
   description     String
   imageUrl        String?
   imageCount      Int           @default(0)

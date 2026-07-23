@@ -3,7 +3,8 @@ import { advertiseSchema } from "@/lib/validation";
 import { parseJson, ok, serverError } from "@/lib/api";
 import { makeReference } from "@/lib/reference";
 import { sendEmail, emailLayout, notifyTo } from "@/lib/email";
-import { formatNaira } from "@/lib/utils";
+import { formatMoney } from "@/lib/currency";
+import { currencyOf } from "@/data/locations";
 import { rateLimit } from "@/lib/rate-limit";
 import { captureError } from "@/lib/observability";
 
@@ -33,6 +34,7 @@ export async function POST(req: Request) {
         country: d.country,
         location: d.location,
         price: d.price,
+        currencyCode: currencyOf(d.country),
         description: d.description,
         imageUrl: d.imageUrl || null,
         imageCount: d.imageCount,
@@ -51,7 +53,7 @@ export async function POST(req: Request) {
         ["For", d.transactionType],
         ["Class / Listing", `${d.propertyClass} · ${d.listingType}`],
         ["Location", d.location],
-        ["Price", formatNaira(d.price)],
+        ["Price", formatMoney(d.price, currencyOf(d.country))],
       ]),
     });
     return ok(
