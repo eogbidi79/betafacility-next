@@ -1,6 +1,8 @@
 import { prisma } from "@/lib/db";
 import { cancelSchema } from "@/lib/validation";
 import { parseJson, ok, serverError } from "@/lib/api";
+import { rateLimit } from "@/lib/rate-limit";
+import { captureError } from "@/lib/observability";
 import { makeReference } from "@/lib/reference";
 import { sendEmail, emailLayout, notifyTo } from "@/lib/email";
 import { formatNaira } from "@/lib/utils";
@@ -15,6 +17,9 @@ export async function POST(
   req: Request,
   { params }: { params: Promise<{ reference: string }> },
 ) {
+  const limited = rateLimit(req, "cancel", { limit: 10, windowMs: 60_000 });
+  if (limited) return limited;
+
   const { reference } = await params;
   const parsed = await parseJson(req, cancelSchema);
   if (!parsed.ok) return parsed.response;
@@ -88,7 +93,7 @@ export async function POST(
 
     return ok({ reference, status: "CANCELLED", refundOutcome, voucherCode, message });
   } catch (err) {
-    console.error("cancel failed", err);
+    captureError(err, { route: "booking.cancel" });
     return serverError();
   }
 }

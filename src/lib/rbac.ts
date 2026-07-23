@@ -52,9 +52,15 @@ export const isStaff = (role?: string): boolean => role === "STAFF";
 /** Can change records (super admin globally, country admin within their country). */
 export const canManage = (role?: string): boolean => role === "ADMIN" || role === "COUNTRY_ADMIN";
 
-/** Can view operations / reports (super admin, staff, country admin). */
+/** Can view the operations dashboard (super admin, staff, country admin). */
 export const canReadOps = (role?: string): boolean =>
   role === "ADMIN" || role === "STAFF" || role === "COUNTRY_ADMIN";
+
+/**
+ * Can view/generate the global status report. Reports are not country-scoped, so
+ * they're limited to global roles (super admin + staff), never country admins.
+ */
+export const canViewReports = (role?: string): boolean => role === "ADMIN" || role === "STAFF";
 
 /** Global-only capabilities: user management, audit log, platform settings. */
 export const isGlobalAdmin = (role?: string): boolean => role === "ADMIN";
@@ -80,9 +86,9 @@ export function routeAllowed(path: string, role?: string): boolean {
   ) {
     return canManage(role);
   }
-  // Reports (super admin + staff + country admin)
+  // Reports (super admin + staff only — report data is global, not scoped)
   if (path.startsWith("/portal/report")) {
-    return canReadOps(role);
+    return canViewReports(role);
   }
   // Portal dashboard: any authenticated user (role-specific view rendered inside)
   if (path.startsWith("/portal")) {

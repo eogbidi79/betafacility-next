@@ -17,12 +17,12 @@ export function CheckoutButton({ reference, label }: { reference: string; label:
         body: JSON.stringify({ reference }),
       });
       const json = await res.json();
-      if (!res.ok || !json.authorizationUrl) {
+      if (!res.ok || !json.data?.authorizationUrl) {
         setError(json.error || "Could not start payment.");
         setBusy(false);
         return;
       }
-      window.location.href = json.authorizationUrl;
+      window.location.href = json.data.authorizationUrl;
     } catch {
       setError("Network error. Please try again.");
       setBusy(false);

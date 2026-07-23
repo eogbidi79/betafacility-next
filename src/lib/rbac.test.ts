@@ -67,9 +67,10 @@ describe("routeAllowed", () => {
     }
   });
 
-  it("gates reports to super + staff + country admin", () => {
+  it("gates reports to super + staff only (report data is global, not scoped)", () => {
+    expect(routeAllowed("/portal/report", "ADMIN")).toBe(true);
     expect(routeAllowed("/portal/report", "STAFF")).toBe(true);
-    expect(routeAllowed("/portal/report", "COUNTRY_ADMIN")).toBe(true);
+    expect(routeAllowed("/portal/report", "COUNTRY_ADMIN")).toBe(false);
     expect(routeAllowed("/portal/report", "TENANT")).toBe(false);
   });
 

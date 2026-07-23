@@ -1,6 +1,8 @@
 import { z } from "zod";
 import { prisma } from "@/lib/db";
 import { parseJson, ok, serverError } from "@/lib/api";
+import { rateLimit } from "@/lib/rate-limit";
+import { captureError } from "@/lib/observability";
 import { initializeTransaction, isPaystackConfigured } from "@/lib/paystack";
 import { NextResponse } from "next/server";
 
@@ -9,6 +11,9 @@ export const runtime = "nodejs";
 const schema = z.object({ reference: z.string().trim().min(1) });
 
 export async function POST(req: Request) {
+  const limited = rateLimit(req, "payments-init", { limit: 12, windowMs: 60_000 });
+  if (limited) return limited;
+
   const parsed = await parseJson(req, schema);
   if (!parsed.ok) return parsed.response;
 
@@ -73,7 +78,7 @@ export async function POST(req: Request) {
     });
     return ok({ authorizationUrl });
   } catch (err) {
-    console.error("payments/init failed", err);
+    captureError(err, { route: "payments.init" });
     return serverError("Could not start payment");
   }
 }

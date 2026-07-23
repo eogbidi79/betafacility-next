@@ -1,6 +1,8 @@
 import { prisma } from "@/lib/db";
 import { signSchema } from "@/lib/validation";
 import { parseJson, ok, serverError } from "@/lib/api";
+import { rateLimit } from "@/lib/rate-limit";
+import { captureError } from "@/lib/observability";
 import { notifyAgreementSigned } from "@/lib/notifications";
 import { site } from "@/data/site";
 import { NextResponse } from "next/server";
@@ -11,6 +13,9 @@ export async function POST(
   req: Request,
   { params }: { params: Promise<{ reference: string }> },
 ) {
+  const limited = rateLimit(req, "sign", { limit: 10, windowMs: 60_000 });
+  if (limited) return limited;
+
   const { reference } = await params;
   const parsed = await parseJson(req, signSchema);
   if (!parsed.ok) return parsed.response;
@@ -64,7 +69,7 @@ export async function POST(
 
     return ok({ reference, status: "SIGNED", receiptUrl: `/bookings/${reference}/receipt`, docUrl });
   } catch (err) {
-    console.error("sign failed", err);
+    captureError(err, { route: "booking.sign" });
     return serverError();
   }
 }

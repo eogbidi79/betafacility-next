@@ -41,7 +41,7 @@ async function uploadToR2(blob: Blob): Promise<string | null> {
   const res = await fetch("/api/upload", { method: "POST", body: fd });
   if (!res.ok) return null; // 501 = not configured → fall through
   const json = await res.json();
-  return (json.url as string) ?? null;
+  return (json.data?.url as string) ?? null;
 }
 
 async function uploadToCloudinary(blob: Blob): Promise<string> {

@@ -14,7 +14,7 @@ const categories = [
 ];
 
 export function AdvertiseForm() {
-  const { state, submit, result, errorMessage } = useSubmit("/api/advertise");
+  const { state, submit, result, errorMessage } = useSubmit("/api/list-property");
 
   return (
     <form

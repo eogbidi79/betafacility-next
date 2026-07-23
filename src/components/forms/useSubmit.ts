@@ -24,7 +24,8 @@ export function useSubmit(endpoint: string) {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(data),
       });
-      const json = (await res.json().catch(() => ({}))) as Result & {
+      const json = (await res.json().catch(() => ({}))) as {
+        data?: Result;
         error?: string;
         issues?: { path: string; message: string }[];
       };
@@ -36,7 +37,8 @@ export function useSubmit(endpoint: string) {
         return false;
       }
 
-      setResult(json);
+      // Success envelope is { data }.
+      setResult(json.data ?? {});
       setState("success");
       return true;
     } catch {

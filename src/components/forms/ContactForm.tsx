@@ -6,7 +6,7 @@ import { useSubmit } from "./useSubmit";
 import { FormStatus } from "./FormStatus";
 
 export function ContactForm() {
-  const { state, submit, errorMessage } = useSubmit("/api/contact");
+  const { state, submit, errorMessage } = useSubmit("/api/inquiries");
 
   return (
     <form

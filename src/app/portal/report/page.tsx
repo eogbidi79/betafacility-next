@@ -6,14 +6,14 @@ import { ButtonLink } from "@/components/ui/Button";
 import { PrintButton } from "@/components/booking/PrintButton";
 import { Letterhead } from "@/components/booking/Letterhead";
 import { formatNaira } from "@/lib/utils";
-import { canReadOps } from "@/lib/rbac";
+import { canViewReports } from "@/lib/rbac";
 
 export const dynamic = "force-dynamic";
 export const metadata = { title: "Status Report", robots: { index: false } };
 
 export default async function ReportPage() {
   const session = await auth();
-  if (!canReadOps(session?.user?.role)) redirect("/portal");
+  if (!canViewReports(session?.user?.role)) redirect("/portal");
 
   const [byStatus, byTerm, byStage, maint, listings, contacts, revenue] = await Promise.all([
     prisma.booking.groupBy({ by: ["status"], _count: { _all: true }, _sum: { amount: true } }),

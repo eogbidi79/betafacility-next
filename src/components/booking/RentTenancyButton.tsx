@@ -45,7 +45,7 @@ export function RentTenancyButton({ slug, title, pricePerYear }: Props) {
         setBusy(false);
         return;
       }
-      setReference(app.reference);
+      setReference(app.data?.reference ?? null);
     } catch {
       setError("Network error. Please try again.");
       setBusy(false);

@@ -57,15 +57,15 @@ export function BookNowButton({ slug, title, pricePerNight, size = "sm" }: Props
       const payRes = await fetch("/api/payments/init", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ reference: booking.reference }),
+        body: JSON.stringify({ reference: booking.data?.reference }),
       });
       const pay = await payRes.json();
-      if (!payRes.ok || !pay.authorizationUrl) {
+      if (!payRes.ok || !pay.data?.authorizationUrl) {
         setError(pay.error || "Could not start payment.");
         setBusy(false);
         return;
       }
-      window.location.href = pay.authorizationUrl;
+      window.location.href = pay.data.authorizationUrl;
     } catch {
       setError("Network error. Please try again.");
       setBusy(false);

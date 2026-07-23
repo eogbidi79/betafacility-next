@@ -1,6 +1,8 @@
 import { prisma } from "@/lib/db";
 import { tenancySchema } from "@/lib/validation";
 import { parseJson, ok, serverError } from "@/lib/api";
+import { rateLimit } from "@/lib/rate-limit";
+import { captureError } from "@/lib/observability";
 import { randomUUID } from "node:crypto";
 import { makeReference } from "@/lib/reference";
 import { formatNaira } from "@/lib/utils";
@@ -12,6 +14,9 @@ import { NextResponse } from "next/server";
 export const runtime = "nodejs";
 
 export async function POST(req: Request) {
+  const limited = rateLimit(req, "tenancy", { limit: 5, windowMs: 60_000 });
+  if (limited) return limited;
+
   const parsed = await parseJson(req, tenancySchema);
   if (!parsed.ok) return parsed.response;
 
@@ -76,7 +81,7 @@ export async function POST(req: Request) {
       201,
     );
   } catch (err) {
-    console.error("tenancy POST failed", err);
+    captureError(err, { route: "tenancy" });
     return serverError();
   }
 }

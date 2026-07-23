@@ -87,9 +87,11 @@ export default async function PortalPage() {
           </p>
         </div>
         <div className="flex items-center gap-2">
-          <ButtonLink href="/portal/report" size="sm" variant="outline">
-            Status Report
-          </ButtonLink>
+          {(superAdmin || staffReadOnly) && (
+            <ButtonLink href="/portal/report" size="sm" variant="outline">
+              Status Report
+            </ButtonLink>
+          )}
           {canMgr && (
             <ButtonLink href="/portal/rentals" size="sm" variant="outline">
               Manage Rentals

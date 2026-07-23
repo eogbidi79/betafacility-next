@@ -1,5 +1,6 @@
 import { auth } from "@/auth";
 import { prisma } from "@/lib/db";
+import { canViewReports } from "@/lib/rbac";
 import { NextResponse } from "next/server";
 
 export const runtime = "nodejs";
@@ -11,8 +12,7 @@ function csvCell(v: unknown): string {
 
 export async function GET() {
   const session = await auth();
-  const role = session?.user?.role;
-  if (role !== "ADMIN" && role !== "STAFF") {
+  if (!canViewReports(session?.user?.role)) {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
 
