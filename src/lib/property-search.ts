@@ -26,6 +26,8 @@ export type PropertyPage = {
   limit: number;
 };
 
+export const PAGE_SIZE = 9;
+
 const ALL = "all";
 const set = (v?: string) => v && v !== ALL && v.trim() !== "";
 
@@ -66,7 +68,7 @@ export function buildPropertyWhere(f: PropertyFilters): Prisma.RentalListingWher
 /** Server-side, indexed, paginated property search (featured first). */
 export async function searchProperties(
   f: PropertyFilters,
-  { page = 1, limit = 9 }: { page?: number; limit?: number } = {},
+  { page = 1, limit = PAGE_SIZE }: { page?: number; limit?: number } = {},
 ): Promise<PropertyPage> {
   const where = buildPropertyWhere(f);
   const safePage = Math.max(1, page);

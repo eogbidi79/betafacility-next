@@ -1,10 +1,10 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { RentalListingCard } from "./RentalListingCard";
 import { MapEmbed } from "@/components/map/MapEmbed";
 import { Select, Input } from "@/components/ui/Field";
-import type { ListingDTO } from "@/lib/listings";
+import type { PropertyPage } from "@/lib/property-search";
 import {
   COUNTRY_NAMES,
   regionsOf,
@@ -17,10 +17,8 @@ import {
 } from "@/data/locations";
 
 const ALL = "all";
-const PER_PAGE = 9;
-const price = (l: ListingDTO) => l.rentPerYear ?? l.price ?? 0;
 
-export function RentalsBrowser({ listings }: { listings: ListingDTO[] }) {
+export function RentalsBrowser({ initial }: { initial: PropertyPage }) {
   const [country, setCountry] = useState(ALL);
   const [region, setRegion] = useState(ALL);
   const [city, setCity] = useState(ALL);
@@ -34,38 +32,76 @@ export function RentalsBrowser({ listings }: { listings: ListingDTO[] }) {
   const [furnished, setFurnished] = useState(false);
   const [parking, setParking] = useState(false);
   const [pet, setPet] = useState(false);
-  const [page, setPage] = useState(1);
+
+  const [page, setPage] = useState(initial.page);
+  const [data, setData] = useState<PropertyPage>(initial);
+  const [loading, setLoading] = useState(false);
 
   const regions = country !== ALL ? regionsOf(country) : [];
   const cities = country !== ALL && region !== ALL ? citiesOf(country, region) : [];
 
-  const filtered = useMemo(() => {
-    const min = minPrice ? Number(minPrice) : null;
-    const max = maxPrice ? Number(maxPrice) : null;
-    return listings.filter(
-      (l) =>
-        (country === ALL || l.country === country) &&
-        (region === ALL || l.state === region) &&
-        (city === ALL || l.city === city) &&
-        (category === ALL || l.rentalCategory === category) &&
-        (propertyType === ALL || l.propertyType === propertyType) &&
-        (bedroom === ALL || l.bedroomType === bedroom) &&
-        (availability === ALL || l.status === availability) &&
-        (listedBy === ALL || l.listedBy === listedBy) &&
-        (min === null || price(l) >= min) &&
-        (max === null || price(l) <= max) &&
-        (!furnished || l.furnished) &&
-        (!parking || l.parking) &&
-        (!pet || l.petFriendly),
-    );
-  }, [listings, country, region, city, category, propertyType, bedroom, availability, listedBy, minPrice, maxPrice, furnished, parking, pet]);
+  // A stable key for the current filter set (page excluded).
+  const filtersKey = useMemo(
+    () =>
+      JSON.stringify({
+        country, region, city, category, propertyType, bedroom,
+        availability, listedBy, minPrice, maxPrice, furnished, parking, pet,
+      }),
+    [country, region, city, category, propertyType, bedroom, availability, listedBy, minPrice, maxPrice, furnished, parking, pet],
+  );
 
-  // Reset to page 1 whenever the result set changes.
-  useEffect(() => setPage(1), [filtered.length]);
+  const first = useRef(true);
 
-  const totalPages = Math.max(1, Math.ceil(filtered.length / PER_PAGE));
-  const pageSafe = Math.min(page, totalPages);
-  const pageItems = filtered.slice((pageSafe - 1) * PER_PAGE, pageSafe * PER_PAGE);
+  // Reset to page 1 when the filter set changes (not on first mount).
+  useEffect(() => {
+    if (first.current) return;
+    setPage(1);
+  }, [filtersKey]);
+
+  // Fetch server-filtered, paginated results. Skips the first render (SSR gave
+  // us page 1); debounced so typing in the price fields doesn't spam the API.
+  useEffect(() => {
+    if (first.current) {
+      first.current = false;
+      return;
+    }
+    const controller = new AbortController();
+    const timer = setTimeout(async () => {
+      const qs = new URLSearchParams();
+      const put = (k: string, v: string) => v && v !== ALL && qs.set(k, v);
+      put("country", country);
+      put("region", region);
+      put("city", city);
+      put("category", category);
+      put("propertyType", propertyType);
+      put("bedroom", bedroom);
+      put("status", availability);
+      put("listedBy", listedBy);
+      if (minPrice) qs.set("minPrice", minPrice);
+      if (maxPrice) qs.set("maxPrice", maxPrice);
+      if (furnished) qs.set("furnished", "true");
+      if (parking) qs.set("parking", "true");
+      if (pet) qs.set("pet", "true");
+      qs.set("page", String(page));
+      qs.set("limit", String(initial.limit));
+
+      setLoading(true);
+      try {
+        const res = await fetch(`/api/properties?${qs.toString()}`, { signal: controller.signal });
+        const json = await res.json();
+        if (json.data) setData(json.data as PropertyPage);
+      } catch {
+        /* aborted or network error — keep last results */
+      } finally {
+        setLoading(false);
+      }
+    }, 300);
+
+    return () => {
+      clearTimeout(timer);
+      controller.abort();
+    };
+  }, [filtersKey, page, initial.limit]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const reset = () => {
     setCountry(ALL);
@@ -82,6 +118,11 @@ export function RentalsBrowser({ listings }: { listings: ListingDTO[] }) {
     setParking(false);
     setPet(false);
   };
+
+  const items = data.items;
+  const totalPages = data.pageCount;
+  const current = data.page;
+  const noLocation = country === ALL && region === ALL && city === ALL;
 
   return (
     <div>
@@ -190,7 +231,9 @@ export function RentalsBrowser({ listings }: { listings: ListingDTO[] }) {
             <input type="checkbox" checked={pet} onChange={(e) => setPet(e.target.checked)} className="h-4 w-4 rounded border-gray-300 text-brand-500" />
             Pet friendly
           </label>
-          <span className="ml-auto text-sm text-ink-muted">{filtered.length} listing{filtered.length === 1 ? "" : "s"}</span>
+          <span className="ml-auto text-sm text-ink-muted">
+            {loading ? "Searching…" : `${data.total} listing${data.total === 1 ? "" : "s"}`}
+          </span>
           <button onClick={reset} className="text-sm font-medium text-brand-600 hover:text-brand-700">
             Reset
           </button>
@@ -199,13 +242,13 @@ export function RentalsBrowser({ listings }: { listings: ListingDTO[] }) {
 
       <div className="mt-6 h-80 overflow-hidden rounded-2xl border border-gray-200 shadow-card sm:h-96">
         {/* Mapbox when configured (clusters, auto-fit); else Leaflet coverage view. */}
-        <MapEmbed listings={filtered} world={country === ALL && region === ALL && city === ALL} />
+        <MapEmbed listings={items} world={noLocation} />
       </div>
 
-      {filtered.length > 0 ? (
+      {items.length > 0 ? (
         <>
-          <div className="mt-8 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
-            {pageItems.map((l) => (
+          <div className={`mt-8 grid gap-6 sm:grid-cols-2 lg:grid-cols-3 ${loading ? "opacity-60" : ""}`}>
+            {items.map((l) => (
               <RentalListingCard key={l.id} listing={l} />
             ))}
           </div>
@@ -214,7 +257,7 @@ export function RentalsBrowser({ listings }: { listings: ListingDTO[] }) {
             <div className="mt-8 flex items-center justify-center gap-2">
               <button
                 onClick={() => setPage((p) => Math.max(1, p - 1))}
-                disabled={pageSafe <= 1}
+                disabled={current <= 1}
                 className="rounded-lg border border-gray-300 px-3 py-2 text-sm font-semibold text-ink disabled:opacity-40"
               >
                 Previous
@@ -224,7 +267,7 @@ export function RentalsBrowser({ listings }: { listings: ListingDTO[] }) {
                   key={n}
                   onClick={() => setPage(n)}
                   className={`h-9 w-9 rounded-lg text-sm font-semibold ${
-                    n === pageSafe ? "bg-brand-500 text-white" : "border border-gray-300 text-ink hover:border-ink"
+                    n === current ? "bg-brand-500 text-white" : "border border-gray-300 text-ink hover:border-ink"
                   }`}
                 >
                   {n}
@@ -232,7 +275,7 @@ export function RentalsBrowser({ listings }: { listings: ListingDTO[] }) {
               ))}
               <button
                 onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
-                disabled={pageSafe >= totalPages}
+                disabled={current >= totalPages}
                 className="rounded-lg border border-gray-300 px-3 py-2 text-sm font-semibold text-ink disabled:opacity-40"
               >
                 Next
@@ -241,7 +284,9 @@ export function RentalsBrowser({ listings }: { listings: ListingDTO[] }) {
           )}
         </>
       ) : (
-        <p className="mt-12 text-center text-ink-muted">No rentals match your filters. Try widening your search.</p>
+        <p className="mt-12 text-center text-ink-muted">
+          {loading ? "Searching…" : "No rentals match your filters. Try widening your search."}
+        </p>
       )}
     </div>
   );
