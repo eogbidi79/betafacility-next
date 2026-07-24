@@ -1,9 +1,10 @@
 "use server";
 
-import { revalidatePath } from "next/cache";
+import { revalidatePath, revalidateTag } from "next/cache";
 import { prisma } from "@/lib/db";
 import { logAudit } from "@/lib/audit";
 import { requireManage, pinnedCountry } from "@/lib/authz";
+import { PROPERTIES_TAG } from "@/lib/property-search";
 
 async function loadRentalCountry(id: string): Promise<string | null | undefined> {
   const r = await prisma.rentalListing.findUnique({ where: { id }, select: { country: true } });
@@ -70,6 +71,7 @@ function revalidate() {
   revalidatePath("/portal/rentals");
   revalidatePath("/rentals");
   revalidatePath("/");
+  revalidateTag(PROPERTIES_TAG); // bust the cached /rentals first page
 }
 
 export async function createListing(fd: FormData) {

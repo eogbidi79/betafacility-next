@@ -181,6 +181,12 @@ model AdvertiseSubmission {
   // Displayed publicly only after an admin APPROVES it.
   status          ListingStatus @default(PENDING)
   createdAt       DateTime      @default(now())
+
+  // Indexes for the public marketplace (approved + type) and admin scoping.
+  @@index([status, transactionType])
+  @@index([status, featured, createdAt])
+  @@index([country, status])
+  @@index([email])
 }
 
 model RentalListing {

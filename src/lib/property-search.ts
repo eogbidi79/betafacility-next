@@ -1,6 +1,10 @@
+import { unstable_cache } from "next/cache";
 import type { Prisma } from "@prisma/client";
 import { prisma } from "@/lib/db";
 import { toDTO, type ListingDTO } from "@/lib/listings";
+
+/** Cache tag for property reads; busted by the rental server actions on write. */
+export const PROPERTIES_TAG = "properties";
 
 export type PropertyFilters = {
   country?: string;
@@ -92,3 +96,14 @@ export async function searchProperties(
     limit: take,
   };
 }
+
+/**
+ * Cached default (no-filter) first page for the /rentals SSR shell. Evaluated at
+ * request time (build-safe), edge-cached, and revalidated on a timer or when a
+ * rental write busts the PROPERTIES_TAG. Returns plain DTOs — safe to cache.
+ */
+export const getRentalsFirstPage = unstable_cache(
+  async (): Promise<PropertyPage> => searchProperties({}, { page: 1, limit: PAGE_SIZE }),
+  ["rentals-first-page"],
+  { revalidate: 120, tags: [PROPERTIES_TAG] },
+);

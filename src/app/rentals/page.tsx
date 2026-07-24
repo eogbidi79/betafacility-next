@@ -1,7 +1,7 @@
 import { PageHeader } from "@/components/ui/PageHeader";
 import { Container } from "@/components/ui/Container";
 import { RentalsBrowser } from "@/components/property/RentalsBrowser";
-import { searchProperties, PAGE_SIZE } from "@/lib/property-search";
+import { getRentalsFirstPage } from "@/lib/property-search";
 import { pageMetadata } from "@/lib/seo";
 
 export const dynamic = "force-dynamic";
@@ -14,9 +14,9 @@ export const metadata = pageMetadata({
 });
 
 export default async function RentalsPage() {
-  // SSR the first page (indexed, paginated); the browser fetches /api/properties
-  // as filters or the page change.
-  const initial = await searchProperties({}, { page: 1, limit: PAGE_SIZE });
+  // SSR the first page (indexed, paginated, edge-cached); the browser fetches
+  // /api/properties as filters or the page change.
+  const initial = await getRentalsFirstPage();
 
   return (
     <>
