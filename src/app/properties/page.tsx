@@ -3,6 +3,7 @@ import { Container } from "@/components/ui/Container";
 import { Section, SectionHeading } from "@/components/ui/Section";
 import { Badge } from "@/components/ui/Badge";
 import { WhyChooseUs } from "@/components/home/WhyChooseUs";
+import { RentCalculator } from "@/components/home/RentCalculator";
 import { PropertiesExplorer } from "@/components/property/PropertiesExplorer";
 import {
   coverage,
@@ -39,6 +40,18 @@ export default function PropertiesPage() {
         title="Managed Properties Portfolio"
         subtitle="A transparent look at what we manage — our footprint, upkeep, rental performance and the team that keeps every property running."
       />
+
+      {/* Transparent pricing calculator (from the home page) */}
+      <Section>
+        <SectionHeading
+          eyebrow="Transparent pricing"
+          title="Calculate Your Rental Costs"
+          subtitle="Use our transparent calculator to understand the complete breakdown of fees associated with your new home."
+        />
+        <div className="mt-10">
+          <RentCalculator />
+        </div>
+      </Section>
 
       {/* Why choose us (from the home page) */}
       <Section className="bg-gray-50">
