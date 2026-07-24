@@ -2,6 +2,7 @@ import { PageHeader } from "@/components/ui/PageHeader";
 import { Container } from "@/components/ui/Container";
 import { Section, SectionHeading } from "@/components/ui/Section";
 import { Badge } from "@/components/ui/Badge";
+import { WhyChooseUs } from "@/components/home/WhyChooseUs";
 import { PropertiesExplorer } from "@/components/property/PropertiesExplorer";
 import {
   coverage,
@@ -38,6 +39,11 @@ export default function PropertiesPage() {
         title="Managed Properties Portfolio"
         subtitle="A transparent look at what we manage — our footprint, upkeep, rental performance and the team that keeps every property running."
       />
+
+      {/* Why choose us (from the home page) */}
+      <Section className="bg-gray-50">
+        <WhyChooseUs />
+      </Section>
 
       {/* Coverage / footprint */}
       <Section>
