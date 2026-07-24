@@ -14,7 +14,10 @@ export async function POST(req: Request) {
       message?: string;
       context?: Record<string, unknown>;
     };
-    if (message) captureError(new Error(`[client] ${message}`), { source: "client", ...context });
+    if (typeof message === "string" && message.length > 0) {
+      // Cap length so a hostile client can't flood Sentry with huge payloads.
+      captureError(new Error(`[client] ${message.slice(0, 500)}`), { source: "client", ...context });
+    }
   } catch {
     /* ignore malformed beacons */
   }
