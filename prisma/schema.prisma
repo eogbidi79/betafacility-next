@@ -216,6 +216,16 @@ model RentalListing {
   active         Boolean  @default(true)
   createdAt      DateTime @default(now())
   updatedAt      DateTime @updatedAt
+
+  // Indexes backing the property browse filters (country/region/city, type,
+  // category, status, price) and default featured-first ordering.
+  @@index([country, state, city])
+  @@index([rentalCategory, status])
+  @@index([propertyType])
+  @@index([status])
+  @@index([price])
+  @@index([rentPerYear])
+  @@index([active, featured, createdAt])
 }
 
 /// Agencies, property owners and service vendors that list on the platform.
