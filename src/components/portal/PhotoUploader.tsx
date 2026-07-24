@@ -14,20 +14,24 @@ export function PhotoUploader({
 }) {
   const [urls, setUrls] = useState<string[]>(initial);
   const [busy, setBusy] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   async function onFiles(files: FileList | null) {
     if (!files || files.length === 0) return;
     setBusy(true);
+    setError(null);
     const added: string[] = [];
+    let failure: string | null = null;
     for (const file of Array.from(files)) {
       if (!file.type.startsWith("image/")) continue;
       try {
         added.push(await processImage(file));
-      } catch {
-        /* skip failed file */
+      } catch (err) {
+        failure = err instanceof Error ? err.message : "Upload failed.";
       }
     }
-    setUrls((prev) => [...prev, ...added]);
+    if (added.length) setUrls((prev) => [...prev, ...added]);
+    if (failure) setError(failure);
     setBusy(false);
   }
 
@@ -69,6 +73,8 @@ export function PhotoUploader({
           ))}
         </div>
       )}
+
+      {error && <p className="mt-2 text-xs text-red-600">{error}</p>}
 
       {/* Submitted with the form; the server action splits on newlines. */}
       <textarea name={name} value={urls.join("\n")} readOnly hidden />

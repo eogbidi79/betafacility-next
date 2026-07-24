@@ -6,7 +6,13 @@ import { captureError } from "@/lib/observability";
 
 export const runtime = "nodejs";
 
-const MAX_BYTES = 8 * 1024 * 1024; // 8 MB per image
+// Per-type size caps. Images, plus documents/floor-plans (PDF).
+const MB = 1024 * 1024;
+function limitFor(type: string): number | null {
+  if (type.startsWith("image/")) return 8 * MB;
+  if (type === "application/pdf") return 15 * MB;
+  return null; // unsupported type
+}
 
 export async function POST(req: Request) {
   const actor = await getActor();
@@ -19,8 +25,10 @@ export async function POST(req: Request) {
   const form = await req.formData();
   const file = form.get("file");
   if (!(file instanceof File)) return fail("No file", 400);
-  if (!file.type.startsWith("image/")) return fail("Not an image", 400);
-  if (file.size > MAX_BYTES) return fail("Image too large (max 8MB)", 413);
+
+  const limit = limitFor(file.type);
+  if (limit === null) return fail("Unsupported file type (images or PDF only)", 400);
+  if (file.size > limit) return fail(`File too large (max ${Math.round(limit / MB)}MB)`, 413);
 
   try {
     const buffer = Buffer.from(await file.arrayBuffer());

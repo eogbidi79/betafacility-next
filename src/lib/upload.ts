@@ -2,11 +2,15 @@
 // Order of preference:
 //   1) Cloudflare R2 via /api/upload (server-side, if configured)
 //   2) Cloudinary unsigned (client, if configured)
-//   3) Inline compressed data URL (always works, zero setup)
+//   3) Inline compressed data URL — DEV ONLY (keeps zero-setup local work).
+//
+// In production we never fall back to a data: URL, so image binaries are never
+// persisted in Postgres — hosted object storage (R2/Cloudinary) is required.
 
 const CLOUD = process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME;
 const PRESET = process.env.NEXT_PUBLIC_CLOUDINARY_UPLOAD_PRESET;
 export const cloudinaryConfigured = Boolean(CLOUD && PRESET);
+const ALLOW_INLINE = process.env.NODE_ENV !== "production";
 
 /** Downscale + JPEG-compress a file to a Blob. */
 async function compress(file: File, max = 1600, quality = 0.82): Promise<Blob> {
@@ -82,6 +86,7 @@ export async function processImage(file: File): Promise<string> {
     }
   }
 
-  // 3) Inline
-  return blobToDataUrl(blob);
+  // 3) Inline data URL — development only (never store binaries in Postgres in prod).
+  if (ALLOW_INLINE) return blobToDataUrl(blob);
+  throw new Error("Image storage is not configured. Set up Cloudflare R2 (or Cloudinary) to upload images.");
 }

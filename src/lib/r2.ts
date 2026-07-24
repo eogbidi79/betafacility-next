@@ -29,11 +29,14 @@ const EXT: Record<string, string> = {
   "image/webp": "webp",
   "image/gif": "gif",
   "image/avif": "avif",
+  "application/pdf": "pdf",
 };
 
 export async function uploadToR2(buffer: Buffer, contentType: string): Promise<string> {
   const ext = EXT[contentType] ?? "jpg";
-  const key = `rentals/${crypto.randomUUID()}.${ext}`;
+  // Keep documents/floor-plans separate from listing images.
+  const prefix = contentType === "application/pdf" ? "documents" : "rentals";
+  const key = `${prefix}/${crypto.randomUUID()}.${ext}`;
   await r2().send(
     new PutObjectCommand({
       Bucket: BUCKET,
