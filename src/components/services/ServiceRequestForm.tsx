@@ -2,6 +2,7 @@
 
 import { Button } from "@/components/ui/Button";
 import { Field, Input, Textarea } from "@/components/ui/Field";
+import { track } from "@/lib/analytics";
 import { useSubmit } from "@/components/forms/useSubmit";
 import { FormStatus } from "@/components/forms/FormStatus";
 
@@ -15,7 +16,10 @@ export function ServiceRequestForm({ serviceId }: { serviceId: string }) {
         e.preventDefault();
         const form = e.currentTarget;
         const okDone = await submit({ ...Object.fromEntries(new FormData(form)), serviceId });
-        if (okDone) form.reset();
+        if (okDone) {
+          track("service_request", { serviceId });
+          form.reset();
+        }
       }}
     >
       <div className="grid gap-4 sm:grid-cols-2">

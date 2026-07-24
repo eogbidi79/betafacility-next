@@ -1,5 +1,6 @@
 // Email notifications. Uses Resend's REST API when RESEND_API_KEY is set;
 // otherwise logs to the server console so the flow works in local dev.
+import { captureError } from "@/lib/observability";
 
 type SendArgs = {
   to: string | string[];
@@ -42,11 +43,12 @@ export async function sendEmail({ to, subject, html, replyTo }: SendArgs): Promi
       }),
     });
     if (!res.ok) {
-      console.error("[email] Resend error", res.status, await res.text());
+      const text = await res.text();
+      captureError(new Error(`Resend ${res.status}: ${text}`), { where: "email", subject });
     }
   } catch (err) {
     // Never let a notification failure break the request.
-    console.error("[email] send failed", err);
+    captureError(err, { where: "email", subject });
   }
 }
 

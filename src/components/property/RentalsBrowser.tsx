@@ -4,6 +4,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { RentalListingCard } from "./RentalListingCard";
 import { MapEmbed } from "@/components/map/MapEmbed";
 import { Select, Input } from "@/components/ui/Field";
+import { track } from "@/lib/analytics";
 import type { PropertyPage } from "@/lib/property-search";
 import {
   COUNTRY_NAMES,
@@ -84,6 +85,19 @@ export function RentalsBrowser({ initial }: { initial: PropertyPage }) {
       if (pet) qs.set("pet", "true");
       qs.set("page", String(page));
       qs.set("limit", String(initial.limit));
+
+      // A search is a filter change (page resets to 1), not pagination.
+      if (page === 1) {
+        track("property_search", {
+          country: country !== ALL ? country : undefined,
+          region: region !== ALL ? region : undefined,
+          city: city !== ALL ? city : undefined,
+          category: category !== ALL ? category : undefined,
+          propertyType: propertyType !== ALL ? propertyType : undefined,
+          bedroom: bedroom !== ALL ? bedroom : undefined,
+          status: availability !== ALL ? availability : undefined,
+        });
+      }
 
       setLoading(true);
       try {

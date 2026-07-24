@@ -3,6 +3,7 @@
 import { Button } from "@/components/ui/Button";
 import { Field, Input, Select, Textarea } from "@/components/ui/Field";
 import { COUNTRY_NAMES } from "@/data/locations";
+import { track } from "@/lib/analytics";
 import { useSubmit } from "./useSubmit";
 import { FormStatus } from "./FormStatus";
 
@@ -40,7 +41,10 @@ export function PropertyManagementForm() {
         const payload = { ...Object.fromEntries(fd), services };
         delete (payload as Record<string, unknown>).interest;
         const okDone = await submit(payload);
-        if (okDone) form.reset();
+        if (okDone) {
+          track("lead_submitted", { type: "property_management", country: String(fd.get("country") ?? "") });
+          form.reset();
+        }
       }}
     >
       <div className="grid gap-5 sm:grid-cols-2">

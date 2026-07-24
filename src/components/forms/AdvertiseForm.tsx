@@ -3,6 +3,7 @@
 import { Button } from "@/components/ui/Button";
 import { Field, Input, Select, Textarea } from "@/components/ui/Field";
 import { COUNTRY_NAMES } from "@/data/locations";
+import { track } from "@/lib/analytics";
 import { useSubmit } from "./useSubmit";
 import { FormStatus } from "./FormStatus";
 
@@ -29,7 +30,15 @@ export function AdvertiseForm() {
           ...Object.fromEntries(fd),
           imageCount: images.length,
         });
-        if (okDone) form.reset();
+        if (okDone) {
+          // Partner (agency/owner/landlord) listing submission.
+          track("listing_submitted", {
+            role: String(fd.get("role") ?? ""),
+            transactionType: String(fd.get("transactionType") ?? ""),
+            country: String(fd.get("country") ?? ""),
+          });
+          form.reset();
+        }
       }}
     >
       <div className="grid gap-5 sm:grid-cols-2">

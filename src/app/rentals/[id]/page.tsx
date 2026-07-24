@@ -10,6 +10,7 @@ import { ButtonLink } from "@/components/ui/Button";
 import { Gallery } from "@/components/property/Gallery";
 import { MapEmbed } from "@/components/map/MapEmbed";
 import { RentalListingCard } from "@/components/property/RentalListingCard";
+import { TrackEvent } from "@/components/analytics/TrackEvent";
 import { site } from "@/data/site";
 
 export const dynamic = "force-dynamic";
@@ -81,6 +82,17 @@ export default async function PropertyDetailPage({
 
   return (
     <Container className="py-8 sm:py-12">
+      <TrackEvent
+        event="property_view"
+        props={{
+          id: listing.id,
+          title: listing.title,
+          country: listing.country,
+          city: listing.city,
+          category: listing.rentalCategory,
+          listedBy: listing.listedBy,
+        }}
+      />
       <nav className="mb-5 text-sm text-ink-muted">
         <Link href="/rentals" className="hover:text-brand-600">Rentals</Link>
         <span className="mx-2">/</span>

@@ -6,6 +6,7 @@ import "mapbox-gl/dist/mapbox-gl.css";
 import type { ListingDTO } from "@/lib/listings";
 import { CITY_COORDS } from "@/data/locations";
 import { formatMoney } from "@/lib/currency";
+import { reportClientError } from "@/lib/analytics";
 
 const TOKEN = process.env.NEXT_PUBLIC_MAPBOX_TOKEN || "";
 
@@ -86,6 +87,11 @@ export default function MapboxListingsMap({ listings }: { listings: ListingDTO[]
     });
     mapRef.current = map;
     map.addControl(new mapboxgl.NavigationControl({ showCompass: false }), "top-right");
+
+    // Report style/tile/token load failures to Sentry.
+    map.on("error", (e: any) => {
+      reportClientError("Mapbox error", { message: e?.error?.message ?? String(e?.error ?? "unknown") });
+    });
 
     map.on("load", () => {
       const fc = toFeatureCollection(listingsRef.current);
