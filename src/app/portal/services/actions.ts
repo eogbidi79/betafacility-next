@@ -20,6 +20,7 @@ export async function createService(formData: FormData) {
 
   const priceRaw = str(formData, "priceFrom");
   const priceFrom = priceRaw ? Math.max(0, Math.round(Number(priceRaw))) : null;
+  const commissionRate = Math.min(100, Math.max(0, Math.round(Number(str(formData, "commissionRate")) || 0)));
 
   const service = await prisma.service.create({
     data: {
@@ -32,6 +33,7 @@ export async function createService(formData: FormData) {
       city: str(formData, "city") || null,
       priceFrom: Number.isFinite(priceFrom as number) ? priceFrom : null,
       currencyCode: str(formData, "currencyCode") || "NGN",
+      commissionRate,
     },
   });
   await logAudit({ actor: actor.email, action: "service.create", entity: "Service", entityId: service.id, summary: `${category}: ${title}` });

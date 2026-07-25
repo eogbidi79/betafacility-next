@@ -296,6 +296,8 @@ model Service {
   city           String?
   priceFrom      Int?
   currencyCode   String   @default("NGN")
+  // Monetisation hook: platform commission on jobs won through this service (%).
+  commissionRate Int      @default(0)
   active         Boolean  @default(true)
   createdAt      DateTime @default(now())
   updatedAt      DateTime @updatedAt
@@ -317,6 +319,10 @@ model ServiceRequest {
   location    String?
   preferredAt DateTime?
   message     String?
+  // Monetisation hooks: recorded job value + platform commission once agreed.
+  quotedAmount     Int?
+  currencyCode     String        @default("NGN")
+  commissionAmount Int?
   status      RequestStatus @default(NEW)
   createdAt   DateTime      @default(now())
 }

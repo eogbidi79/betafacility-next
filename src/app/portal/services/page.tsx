@@ -125,6 +125,9 @@ export default async function ServicesAdminPage() {
               ))}
             </Select>
           </Field>
+          <Field label="Commission %" htmlFor="commissionRate">
+            <Input id="commissionRate" name="commissionRate" type="number" inputMode="numeric" min={0} max={100} placeholder="0" />
+          </Field>
           <Field label="Description" htmlFor="description" className="sm:col-span-2 lg:col-span-3">
             <textarea
               id="description"
@@ -163,6 +166,7 @@ export default async function ServicesAdminPage() {
                     {s.organization.name} ·{" "}
                     {[s.city, s.state, s.country].filter(Boolean).join(", ")}
                     {s.priceFrom != null ? ` · from ${formatMoney(s.priceFrom, s.currencyCode)}` : ""}
+                    {s.commissionRate > 0 ? ` · ${s.commissionRate}% commission` : ""}
                   </p>
                 </div>
                 <div className="flex items-center gap-1.5">
