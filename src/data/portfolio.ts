@@ -22,7 +22,7 @@ export const portfolioStats: { label: string; value: string; hint?: string }[] =
 
 /** Short vs long stay performance. */
 export const rentalBreakdown = {
-  short: { label: "Short-stay bookings", value: "1,280+", note: "Serviced apartments & studios" },
+  short: { label: "Short-stay bookings", value: "Coming soon", note: "Serviced apartments & studios" },
   long: { label: "Long-stay tenancies", value: "36", note: "1-year managed tenancies" },
   onTimeRent: { label: "On-time rent collection", value: "96%" },
   avgStay: { label: "Avg. short-stay length", value: "3.4 nights" },
