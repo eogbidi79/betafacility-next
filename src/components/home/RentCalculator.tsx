@@ -18,7 +18,7 @@ const SERVICE_CHARGE: Record<string, number> = {
   "Studio Apartment": 500_000,
   "1 Bedroom": 650_000,
   "2 Bedroom": 800_000,
-  "3 Bedroom": 950_000, // extrapolated — confirm the intended value
+  "3 Bedroom": 950_000,
 };
 
 // Caution / security deposit by apartment type (fixed, not a %).
