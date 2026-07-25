@@ -9,28 +9,38 @@ import { formatNaira } from "@/lib/utils";
 const FEES = [
   { key: "agency", label: "Agency Fee", rate: 0.1 },
   { key: "legal", label: "Legal Fee", rate: 0.1 },
-  { key: "caution", label: "Caution / Security Deposit", rate: 0.1 },
 ] as const;
+
+const APARTMENT_TYPES = ["Studio Apartment", "1 Bedroom", "2 Bedroom", "3 Bedroom"] as const;
 
 // Suggested annual service charge by apartment type (fixed, not a %).
 const SERVICE_CHARGE: Record<string, number> = {
   "Studio Apartment": 500_000,
   "1 Bedroom": 650_000,
   "2 Bedroom": 800_000,
+  "3 Bedroom": 950_000, // extrapolated — confirm the intended value
 };
-const APARTMENT_TYPES = Object.keys(SERVICE_CHARGE);
+
+// Caution / security deposit by apartment type (fixed, not a %).
+const CAUTION: Record<string, number> = {
+  "Studio Apartment": 150_000,
+  "1 Bedroom": 200_000,
+  "2 Bedroom": 250_000,
+  "3 Bedroom": 300_000,
+};
 
 export function RentCalculator() {
   const [raw, setRaw] = useState("");
-  const [apartment, setApartment] = useState(APARTMENT_TYPES[0]);
+  const [apartment, setApartment] = useState<string>(APARTMENT_TYPES[0]);
 
   const rent = Number(raw.replace(/[^0-9]/g, "")) || 0;
 
   const breakdown = useMemo(() => {
     const items = FEES.map((f) => ({ ...f, amount: Math.round(rent * f.rate) }));
     const serviceCharge = SERVICE_CHARGE[apartment] ?? 0;
-    const feesTotal = items.reduce((sum, i) => sum + i.amount, 0) + serviceCharge;
-    return { items, serviceCharge, feesTotal, total: rent + feesTotal };
+    const caution = CAUTION[apartment] ?? 0;
+    const feesTotal = items.reduce((sum, i) => sum + i.amount, 0) + serviceCharge + caution;
+    return { items, serviceCharge, caution, feesTotal, total: rent + feesTotal };
   }, [rent, apartment]);
 
   return (
@@ -89,6 +99,10 @@ export function RentCalculator() {
                 <dd className="font-medium text-ink-soft">{formatNaira(item.amount)}</dd>
               </div>
             ))}
+            <div className="flex justify-between">
+              <dt className="text-ink-muted">Caution / Security Deposit ({apartment})</dt>
+              <dd className="font-medium text-ink-soft">{formatNaira(breakdown.caution)}</dd>
+            </div>
             <div className="flex justify-between">
               <dt className="text-ink-muted">Service Charge ({apartment}, annual)</dt>
               <dd className="font-medium text-ink-soft">{formatNaira(breakdown.serviceCharge)}</dd>
