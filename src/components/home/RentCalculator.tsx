@@ -1,39 +1,56 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { Field, Input } from "@/components/ui/Field";
+import { Field, Input, Select } from "@/components/ui/Field";
 import { Button } from "@/components/ui/Button";
 import { formatNaira } from "@/lib/utils";
 
-// Transparent fee model applied to the annual rent.
+// Percentage fees applied to the annual rent.
 const FEES = [
   { key: "agency", label: "Agency Fee", rate: 0.1 },
   { key: "legal", label: "Legal Fee", rate: 0.1 },
   { key: "caution", label: "Caution / Security Deposit", rate: 0.1 },
-  { key: "service", label: "Service Charge", rate: 0.05 },
 ] as const;
+
+// Suggested annual service charge by apartment type (fixed, not a %).
+const SERVICE_CHARGE: Record<string, number> = {
+  Studio: 500_000,
+  "1 Bedroom": 650_000,
+  "2 Bedroom": 800_000,
+};
+const APARTMENT_TYPES = Object.keys(SERVICE_CHARGE);
 
 export function RentCalculator() {
   const [raw, setRaw] = useState("");
+  const [apartment, setApartment] = useState(APARTMENT_TYPES[0]);
 
   const rent = Number(raw.replace(/[^0-9]/g, "")) || 0;
 
   const breakdown = useMemo(() => {
     const items = FEES.map((f) => ({ ...f, amount: Math.round(rent * f.rate) }));
-    const feesTotal = items.reduce((sum, i) => sum + i.amount, 0);
-    return { items, feesTotal, total: rent + feesTotal };
-  }, [rent]);
+    const serviceCharge = SERVICE_CHARGE[apartment] ?? 0;
+    const feesTotal = items.reduce((sum, i) => sum + i.amount, 0) + serviceCharge;
+    return { items, serviceCharge, feesTotal, total: rent + feesTotal };
+  }, [rent, apartment]);
 
   return (
     <div className="grid gap-6 lg:grid-cols-2">
       <div className="rounded-2xl border border-gray-200 bg-white p-6 shadow-card">
         <h3 className="text-xl font-bold text-ink">Enter Rental Amount</h3>
         <p className="mt-1 text-sm text-ink-muted">
-          Input the annual rental amount to instantly see the complete breakdown of all associated
-          fees and totals.
+          Input the annual rental amount and apartment type to instantly see the complete breakdown
+          of all associated fees and totals.
         </p>
 
-        <Field label="Annual Rent (₦)" htmlFor="rent" className="mt-5">
+        <Field label="Apartment Type" htmlFor="apartment" className="mt-5">
+          <Select id="apartment" value={apartment} onChange={(e) => setApartment(e.target.value)}>
+            {APARTMENT_TYPES.map((t) => (
+              <option key={t}>{t}</option>
+            ))}
+          </Select>
+        </Field>
+
+        <Field label="Annual Rent (₦)" htmlFor="rent" className="mt-4">
           <Input
             id="rent"
             inputMode="numeric"
@@ -43,7 +60,14 @@ export function RentCalculator() {
           />
         </Field>
 
-        <Button variant="outline" className="mt-4" onClick={() => setRaw("")}>
+        <Button
+          variant="outline"
+          className="mt-4"
+          onClick={() => {
+            setRaw("");
+            setApartment(APARTMENT_TYPES[0]);
+          }}
+        >
           Reset
         </Button>
       </div>
@@ -65,6 +89,10 @@ export function RentCalculator() {
                 <dd className="font-medium text-ink-soft">{formatNaira(item.amount)}</dd>
               </div>
             ))}
+            <div className="flex justify-between">
+              <dt className="text-ink-muted">Service Charge ({apartment}, annual)</dt>
+              <dd className="font-medium text-ink-soft">{formatNaira(breakdown.serviceCharge)}</dd>
+            </div>
             <div className="flex justify-between border-t border-gray-200 pt-3 text-base">
               <dt className="font-bold text-ink">Total Payable</dt>
               <dd className="font-bold text-brand-600">{formatNaira(breakdown.total)}</dd>
