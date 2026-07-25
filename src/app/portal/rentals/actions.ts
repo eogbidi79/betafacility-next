@@ -5,6 +5,14 @@ import { prisma } from "@/lib/db";
 import { logAudit } from "@/lib/audit";
 import { requireManage, pinnedCountry } from "@/lib/authz";
 import { PROPERTIES_TAG } from "@/lib/property-search";
+import { parsePhotos, imageRows } from "@/lib/listings";
+
+/** Rebuild the normalised PropertyImage rows for a listing from its photos JSON. */
+async function syncImages(listingId: string, photosJson: string) {
+  const rows = imageRows(parsePhotos(photosJson), listingId);
+  await prisma.propertyImage.deleteMany({ where: { listingId } });
+  if (rows.length) await prisma.propertyImage.createMany({ data: rows });
+}
 
 async function loadRentalCountry(id: string): Promise<string | null | undefined> {
   const r = await prisma.rentalListing.findUnique({ where: { id }, select: { country: true } });
@@ -80,6 +88,7 @@ export async function createListing(fd: FormData) {
   if (!data.title) return;
   data.country = pinnedCountry(actor, data.country); // country admins pinned to their country
   const created = await prisma.rentalListing.create({ data });
+  await syncImages(created.id, data.photos);
   await logAudit({ actor: actor.email, action: "rental.create", entity: "RentalListing", entityId: created.id, summary: data.title });
   revalidate();
 }
@@ -93,6 +102,7 @@ export async function updateListing(fd: FormData) {
   const data = collect(fd);
   data.country = pinnedCountry(actor, data.country);
   await prisma.rentalListing.update({ where: { id }, data });
+  await syncImages(id, data.photos);
   await logAudit({ actor: actor.email, action: "rental.update", entity: "RentalListing", entityId: id });
   revalidate();
 }

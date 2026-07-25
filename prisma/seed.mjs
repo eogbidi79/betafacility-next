@@ -198,6 +198,33 @@ async function main() {
   }
   console.log(`Seeded ${rentalListings.length} rental listings.`);
 
+  // Backfill/refresh normalised PropertyImage rows from each listing's photos
+  // JSON (idempotent — safe to re-run on every deploy).
+  const PHOTO_ORDER = ["building", "livingRoom", "bedroom", "kitchen", "toiletBathroom"];
+  const allListings = await prisma.rentalListing.findMany({ select: { id: true, photos: true } });
+  let imageCount = 0;
+  for (const l of allListings) {
+    let photos = {};
+    try {
+      photos = JSON.parse(l.photos || "{}") || {};
+    } catch {
+      photos = {};
+    }
+    const rows = [];
+    let i = 0;
+    for (const cat of PHOTO_ORDER) {
+      for (const url of Array.isArray(photos[cat]) ? photos[cat] : []) {
+        rows.push({ listingId: l.id, url, category: cat, sortOrder: i++ });
+      }
+    }
+    await prisma.propertyImage.deleteMany({ where: { listingId: l.id } });
+    if (rows.length) {
+      await prisma.propertyImage.createMany({ data: rows });
+      imageCount += rows.length;
+    }
+  }
+  console.log(`Backfilled ${imageCount} property images.`);
+
   // Admin accounts. Passwords are re-synced from env on every seed run.
   const admins = [
     {

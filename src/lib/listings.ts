@@ -1,4 +1,4 @@
-import type { RentalListing } from "@prisma/client";
+import type { RentalListing, PropertyImage } from "@prisma/client";
 
 export type Photos = {
   livingRoom: string[];
@@ -7,6 +7,17 @@ export type Photos = {
   kitchen: string[];
   building: string[];
 };
+
+/** Category order used for the gallery (cover = first building photo). */
+export const PHOTO_CATEGORIES: (keyof Photos)[] = [
+  "building",
+  "livingRoom",
+  "bedroom",
+  "kitchen",
+  "toiletBathroom",
+];
+
+type RentalWithImages = RentalListing & { images?: PropertyImage[] };
 
 export type ListingDTO = {
   id: string;
@@ -74,7 +85,28 @@ export function coverPhoto(p: Photos): string | null {
   return galleryPhotos(p)[0] ?? null;
 }
 
-export function toDTO(l: RentalListing): ListingDTO {
+/** Group normalised PropertyImage rows (sorted) into the Photos shape. */
+export function photosFromImages(images: PropertyImage[]): Photos {
+  const p: Photos = { livingRoom: [], bedroom: [], toiletBathroom: [], kitchen: [], building: [] };
+  for (const img of [...images].sort((a, b) => a.sortOrder - b.sortOrder)) {
+    if (img.category in p) p[img.category as keyof Photos].push(img.url);
+  }
+  return p;
+}
+
+/** Flatten a Photos object into PropertyImage create rows (gallery order). */
+export function imageRows(photos: Photos, listingId: string) {
+  const rows: { listingId: string; url: string; category: string; sortOrder: number }[] = [];
+  let i = 0;
+  for (const cat of PHOTO_CATEGORIES) {
+    for (const url of photos[cat]) rows.push({ listingId, url, category: cat, sortOrder: i++ });
+  }
+  return rows;
+}
+
+export function toDTO(l: RentalWithImages): ListingDTO {
+  // Prefer normalised images; fall back to the legacy JSON blob during transition.
+  const photos = l.images && l.images.length > 0 ? photosFromImages(l.images) : parsePhotos(l.photos);
   return {
     id: l.id,
     title: l.title,
@@ -98,7 +130,7 @@ export function toDTO(l: RentalListing): ListingDTO {
     petFriendly: l.petFriendly,
     parking: l.parking,
     amenities: parseAmenities(l.amenities),
-    photos: parsePhotos(l.photos),
+    photos,
     description: l.description,
     listedBy: l.listedBy,
     featured: l.featured,

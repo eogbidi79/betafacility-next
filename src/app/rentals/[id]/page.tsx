@@ -46,7 +46,10 @@ export default async function PropertyDetailPage({
   params: Promise<{ id: string }>;
 }) {
   const { id } = await params;
-  const row = await prisma.rentalListing.findUnique({ where: { id } });
+  const row = await prisma.rentalListing.findUnique({
+    where: { id },
+    include: { images: { orderBy: { sortOrder: "asc" } } },
+  });
   if (!row || !row.active) notFound();
   const listing = toDTO(row);
 
@@ -59,6 +62,7 @@ export default async function PropertyDetailPage({
     },
     orderBy: { createdAt: "desc" },
     take: 3,
+    include: { images: { orderBy: { sortOrder: "asc" } } },
   });
   const similar = similarRows.map(toDTO);
 

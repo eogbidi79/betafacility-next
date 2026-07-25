@@ -213,6 +213,8 @@ model RentalListing {
   petFriendly    Boolean  @default(false)
   parking        Boolean  @default(false)
   amenities      String   @default("[]") // JSON string[]
+  // Legacy JSON blob — kept as a fallback/rollback source. Normalised media
+  // lives in PropertyImage (see `images`); reads prefer that when present.
   photos         String   @default("{}") // JSON { livingRoom, bedroom, toiletBathroom, kitchen, building: string[] }
   description    String?
   listedBy       String   @default("Beta Facility") // "Beta Facility" | "Agency" | "Individual"
@@ -223,6 +225,8 @@ model RentalListing {
   createdAt      DateTime @default(now())
   updatedAt      DateTime @updatedAt
 
+  images PropertyImage[]
+
   // Indexes backing the property browse filters (country/region/city, type,
   // category, status, price) and default featured-first ordering.
   @@index([country, state, city])
@@ -232,6 +236,21 @@ model RentalListing {
   @@index([price])
   @@index([rentPerYear])
   @@index([active, featured, createdAt])
+}
+
+/// Normalised media for a property (no binaries in Postgres — URL to R2/CDN).
+/// One row per image/floor-plan/video, ordered by sortOrder within a category.
+model PropertyImage {
+  id         String        @id @default(cuid())
+  listingId  String
+  listing    RentalListing @relation(fields: [listingId], references: [id], onDelete: Cascade)
+  url        String
+  category   String        @default("building") // livingRoom | bedroom | toiletBathroom | kitchen | building | floorplan | video
+  sortOrder  Int           @default(0)
+  caption    String?
+  createdAt  DateTime      @default(now())
+
+  @@index([listingId, sortOrder])
 }
 
 /// Agencies, property owners and service vendors that list on the platform.

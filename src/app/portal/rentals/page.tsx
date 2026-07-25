@@ -136,6 +136,7 @@ export default async function ManageRentalsPage() {
   const rows = await prisma.rentalListing.findMany({
     where: countryScope ? { country: countryScope } : {},
     orderBy: { createdAt: "asc" },
+    include: { images: { orderBy: { sortOrder: "asc" } } },
   });
   const listings = rows.map(toDTO);
 

@@ -14,7 +14,12 @@ export const dynamic = "force-dynamic";
 
 export default async function HomePage() {
   const [rentalRows, listings] = await Promise.all([
-    prisma.rentalListing.findMany({ where: { active: true }, orderBy: { createdAt: "asc" }, take: 3 }),
+    prisma.rentalListing.findMany({
+      where: { active: true },
+      orderBy: { createdAt: "asc" },
+      take: 3,
+      include: { images: { orderBy: { sortOrder: "asc" } } },
+    }),
     prisma.advertiseSubmission.findMany({
       where: { status: "APPROVED" },
       orderBy: { createdAt: "desc" },

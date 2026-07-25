@@ -84,6 +84,7 @@ export async function searchProperties(
       orderBy: [{ featured: "desc" }, { createdAt: "desc" }],
       skip: (safePage - 1) * take,
       take,
+      include: { images: { orderBy: { sortOrder: "asc" } } },
     }),
     prisma.rentalListing.count({ where }),
   ]);
