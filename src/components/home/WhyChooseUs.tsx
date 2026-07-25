@@ -6,7 +6,7 @@ import { ButtonLink } from "@/components/ui/Button";
 import { formatNumber } from "@/lib/utils";
 
 const stats = [
-  { value: 2847, label: "Properties Managed", suffix: "" },
+  { value: 18, label: "Properties Managed", suffix: "" },
   { value: 98.5, label: "Client Retention", suffix: "%" },
 ];
 
