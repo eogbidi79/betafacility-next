@@ -14,7 +14,7 @@ const FEES = [
 
 // Suggested annual service charge by apartment type (fixed, not a %).
 const SERVICE_CHARGE: Record<string, number> = {
-  Studio: 500_000,
+  "Studio Apartment": 500_000,
   "1 Bedroom": 650_000,
   "2 Bedroom": 800_000,
 };
